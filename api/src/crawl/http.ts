@@ -1,5 +1,6 @@
 import http from 'node:http';
 import https from 'node:https';
+import zlib from 'node:zlib';
 import { lookup as dnsLookup, type LookupAddress, type LookupOptions } from 'node:dns';
 import { isIP, type LookupFunction } from 'node:net';
 import type { FetchText } from './sitemap';
@@ -148,7 +149,22 @@ export interface FetchOptions {
 function isAllowedContentType(ct: string): boolean {
   const c = ct.toLowerCase();
   if (c === '') return true; // some servers omit it on sitemaps
-  return c.startsWith('text/') || c.includes('xml') || c.includes('html');
+  return c.startsWith('text/') || c.includes('xml') || c.includes('html') || c.includes('gzip');
+}
+
+// `.xml.gz` sitemaps are gzip payloads (magic 1f 8b). We fetch over node:http
+// without `Accept-Encoding`, so transfer isn't compressed — but the *file* can
+// still be gzip. Detect by magic bytes and gunzip, capping output to maxBytes so
+// a gzip bomb can't blow past the size guard. Non-gzip bodies decode as utf8.
+export function decodeBody(buf: Buffer, maxBytes: number): string {
+  if (buf.length >= 2 && buf[0] === 0x1f && buf[1] === 0x8b) {
+    try {
+      return zlib.gunzipSync(buf, { maxOutputLength: maxBytes }).toString('utf8');
+    } catch {
+      return ''; // corrupt or oversized → treat as empty (discovery keeps searching)
+    }
+  }
+  return buf.toString('utf8');
 }
 
 interface RawResponse {
@@ -190,7 +206,7 @@ function requestOnce(rawUrl: string, opts: Required<FetchOptions>): Promise<RawR
           chunks.push(chunk);
         });
         res.on('end', () => {
-          resolve({ status, contentType, body: Buffer.concat(chunks).toString('utf8') });
+          resolve({ status, contentType, body: decodeBody(Buffer.concat(chunks), opts.maxBytes) });
         });
       },
     );

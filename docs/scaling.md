@@ -32,6 +32,8 @@ Sessions must be revocable, or need reset/verification/compliance → refresh to
 
 Already durable + horizontally scalable (Postgres `crawl_jobs` + `SKIP LOCKED` workers; add worker containers for throughput). The remaining lever: broker-grade features → move to a dedicated broker (SQS/BullMQ/Temporal) for priorities, delayed jobs, dead-letter queues, and cross-service fan-out; add per-host rate-limiting + robots-`crawl-delay` compliance and scheduled re-crawls.
 
+**Sitemap-discovery boundary (by design):** non-root sitemaps are found only when *declared* — via robots.txt `Sitemap:`, a homepage `<link rel="sitemap">`, or as an index child (all handled). An undeclared sitemap at a non-root path (e.g. `/catalog/sitemap.xml` with nothing pointing to it) is not found, because blind path-probing stays root-only — guessing arbitrary paths is combinatorial and is exactly what the spec's declaration mechanism exists to avoid. Production could close the tail via Search Console / Bing Webmaster sitemap APIs (authenticated per-site submissions) rather than heuristics.
+
 ## Keyword & issue logic
 
 On-page heuristics aren't accurate enough → real SERP/keyword data + ML ranking; issue checks backed by a rules engine and real audits (Lighthouse/crawl diagnostics).

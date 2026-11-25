@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   discoverBlogPostUrls,
   scoreSitemapLoc,
+  extractSitemapLinks,
   NoSitemapError,
   type FetchText,
 } from '../sitemap';
@@ -92,6 +93,40 @@ describe('discoverBlogPostUrls', () => {
     expect(result).toEqual(posts);
   });
 
+  it('falls back to /wp-sitemap.xml for WordPress-core sites', async () => {
+    const posts = ['https://wp.com/a/', 'https://wp.com/b/'];
+    const fetchText = fakeFetch({
+      // no robots sitemap, no homepage link, /sitemap.xml absent → wp-sitemap.xml
+      'https://wp.com/wp-sitemap.xml': urlsetXml(posts),
+    });
+
+    const result = await discoverBlogPostUrls('https://wp.com', { fetchText });
+    expect(result).toEqual(posts);
+  });
+
+  it('reads the homepage <link rel="sitemap"> when robots.txt is silent', async () => {
+    const posts = ['https://lk.com/post/1/', 'https://lk.com/post/2/'];
+    const fetchText = fakeFetch({
+      'https://lk.com':
+        '<html><head><link rel="sitemap" type="application/xml" href="/custom/sm.xml"></head></html>',
+      'https://lk.com/custom/sm.xml': urlsetXml(posts),
+    });
+
+    const result = await discoverBlogPostUrls('https://lk.com', { fetchText });
+    expect(result).toEqual(posts);
+  });
+
+  it('parses the plain-text sitemap format (one URL per line)', async () => {
+    const posts = ['https://tx.com/one/', 'https://tx.com/two/'];
+    const fetchText = fakeFetch({
+      'https://tx.com/robots.txt': 'Sitemap: https://tx.com/sitemap.txt',
+      'https://tx.com/sitemap.txt': `# comment line\n${posts.join('\n')}\n`,
+    });
+
+    const result = await discoverBlogPostUrls('https://tx.com', { fetchText });
+    expect(result).toEqual(posts);
+  });
+
   it('throws NoSitemapError when nothing is found', async () => {
     const fetchText = fakeFetch({});
     await expect(discoverBlogPostUrls('https://nope.com', { fetchText })).rejects.toBeInstanceOf(
@@ -116,5 +151,22 @@ describe('scoreSitemapLoc', () => {
     const sameHost = scoreSitemapLoc('https://www.semrush.com/sitemap.xml', 'www.semrush.com');
     const crossHostBlog = scoreSitemapLoc('https://de.semrush.com/blog/sitemap/', 'www.semrush.com');
     expect(sameHost).toBeGreaterThan(crossHostBlog);
+  });
+});
+
+describe('extractSitemapLinks', () => {
+  it('resolves rel="sitemap" hrefs (relative and absolute) against the base', () => {
+    const html =
+      '<link rel="stylesheet" href="/x.css">' +
+      '<link rel="sitemap" href="/sitemap.xml">' +
+      '<link href="https://cdn.example.com/sm.xml" rel="sitemap">';
+    expect(extractSitemapLinks(html, 'https://example.com')).toEqual([
+      'https://example.com/sitemap.xml',
+      'https://cdn.example.com/sm.xml',
+    ]);
+  });
+
+  it('returns nothing when no sitemap link is present', () => {
+    expect(extractSitemapLinks('<link rel="icon" href="/f.ico">', 'https://example.com')).toEqual([]);
   });
 });
