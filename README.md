@@ -14,15 +14,34 @@ PostgreSQL · Node 24 (LTS) + TypeScript + Express + `node-postgres` (raw SQL, *
 
 ## How to run
 
-> _Completed when the app is scaffolded._ Target flow (Node 24; copy `.env.example` → `.env`):
->
-> ```bash
-> docker compose up -d db     # PostgreSQL
-> npm install                 # all workspaces
-> npm run migrate             # apply db/migrations/*.sql
-> npm run seed                # crawl seed sites + generate ≥50k rank snapshots
-> npm run dev                 # api + worker + web
-> ```
+Requires **Node 24** and **Docker** (for PostgreSQL). From a clean clone:
+
+```bash
+# 1. Configure — copy the template and set a demo password
+cp .env.example .env
+#    Edit .env and set SEED_PASSWORD to a password of your choice.
+#    It becomes the login for the demo accounts the seed creates (no default).
+
+# 2. Start PostgreSQL
+docker compose up -d db
+
+# 3. Install, create the schema, and seed
+npm ci
+npm run migrate      # applies db/migrations/*.sql
+npm run seed         # crawls the seed sites + generates ≥50k rank snapshots (a few minutes)
+
+# 4. Run everything (API :4000 · worker · web :5173)
+npm run dev
+```
+
+**Demo accounts** — created by the seed; the password is the `SEED_PASSWORD` you set in `.env`:
+
+| Email | Client |
+|---|---|
+| `alex@agency.test` | Semrush (https://www.semrush.com) |
+| `sam@agency.test` | Yoast (https://yoast.com) |
+
+Validate the whole suite (lint + typecheck + tests) with `npm run check`.
 
 ## Documentation
 
