@@ -23,7 +23,7 @@ Take-home for **ProductiveShop** (a B2B SaaS marketing agency — SEO, content, 
 
 ## Research facts anchoring the design
 
-**Local toolchain:** Node 20.20 / npm 10.8. **No Postgres, no Docker, no psql in the sandbox** → here we can run `npm install`, `tsc`, `eslint`, `vitest` (pure logic with fixtures); migrations/seed/e2e run on the reviewer's machine via docker-compose.
+**Local toolchain:** Node 20.20 / npm 10.8 (the dev sandbox only — the **project targets Node 24 LTS**, see `decisions.md`). **No Postgres, no Docker, no psql in the sandbox** → here we can run `npm install`, `tsc`, `eslint`, `vitest` (pure logic with fixtures); migrations/seed/e2e run on the reviewer's machine via docker-compose.
 
 **Sitemap discovery (the evaluated core) — confirmed non-trivial:**
 - `yoast.com/robots.txt` → `Sitemap: https://yoast.com/sitemap_index.xml` (an index) → children include `post-sitemap.xml`, `post-sitemap2.xml` (posts) + traps to avoid: `post_tag-sitemap.xml`, `page-sitemap.xml`, `product-sitemap.xml`.
@@ -186,7 +186,7 @@ A unit test proves User A cannot reach User B's page by changing the id in the U
 
 - 2 users × 1 client × 15 pages = 30 pages; ~8 keywords/page ⇒ ~240 pairs. Seed generates **one per pair per day** over `ceil(50000/pairs)+margin` (~**400 days**) → guarantees ≥50k rows regardless of the pair count. Bulk insert via **`COPY`** (`pg-copy-streams`) or multi-row `INSERT` in ~5k batches. **Seedable** RNG (random walk 1..100, small daily deltas) → reproducible and realistic charts.
 - **Latest position (hot path, list):** SQL with `DISTINCT ON (page_id, keyword_id) … ORDER BY page_id, keyword_id, captured_at DESC` to get each pair's latest, inside a CTE, then aggregate per page to the **best (lowest) position on the most recent date**. Fast on the `(page_id, keyword_id, captured_at DESC)` index; `EXPLAIN ANALYZE` documented in the README (note: materialized `rank_latest` if it grows a lot).
-- **Timezone:** `captured_at` in **UTC** (timestamptz). Display converted to **America/Toronto** (`Intl` with `timeZone`). Date filter: user picks dates in Toronto → API converts to UTC bounds (`AT TIME ZONE`). Convention explained in the README.
+- **Timezone:** `captured_at` in **UTC** (timestamptz). Display converted to **America/Toronto** (client, `Intl` with `timeZone`); date filter converts the picked Toronto dates to UTC bounds (server, `AT TIME ZONE`). Both read the **same configured zone** (a single env constant, default `America/Toronto`) — server stays otherwise pure-UTC. Convention explained in the README.
 
 ---
 

@@ -1,0 +1,50 @@
+# SEO Keyword Tracker
+
+A small SEO keyword tracker for a marketing agency. A user signs in and sees their client's crawled pages, each with the keywords it likely ranks for, the SEO issues found on it, and its rank position over time — and can point the crawler at a new website to pull it in.
+
+Take-home built with **Node + TypeScript** (Express, **raw SQL on PostgreSQL**) and **React** (Vite). This README is the map; the full design lives in [`docs/`](docs/).
+
+## Status
+
+**Planning complete; implementation in progress.** The architecture, database schema, SEO heuristics, and design system are fully specified and decided (see the [decision log](docs/decisions.md)). Run instructions below are filled in as the app is scaffolded.
+
+## Stack
+
+PostgreSQL · Node 24 (LTS) + TypeScript + Express + `node-postgres` (raw SQL, **no ORM**) · React + Vite + TS + CSS Modules + TanStack Query + Recharts · npm-workspaces monorepo (`api` + `web`; the crawl worker is a second entrypoint of `api`, draining a Postgres `SKIP LOCKED` queue).
+
+## How to run
+
+> _Completed when the app is scaffolded._ Target flow (Node 24; copy `.env.example` → `.env`):
+>
+> ```bash
+> docker compose up -d db     # PostgreSQL
+> npm install                 # all workspaces
+> npm run migrate             # apply db/migrations/*.sql
+> npm run seed                # crawl seed sites + generate ≥50k rank snapshots
+> npm run dev                 # api + worker + web
+> ```
+
+## Documentation
+
+| Document | What it covers |
+|---|---|
+| [docs/project_description.md](docs/project_description.md) | The original brief (requirements, constraints). |
+| [docs/implementation-plan.md](docs/implementation-plan.md) | Architecture, monorepo layout, endpoints, phasing, verification. |
+| [docs/decisions.md](docs/decisions.md) | Decision log — every choice and the reasoning, terse. |
+| [docs/database.md](docs/database.md) | Schema: ER diagram, DDL, the hot queries, modeling notes. |
+| [docs/design.md](docs/design.md) | Design language + the theme-token system (ProductiveShop-aligned). |
+| [docs/heuristics.md](docs/heuristics.md) | Keyword (RAKE + zone-weighting) and SEO-issue heuristics + sources. |
+| [docs/scaling.md](docs/scaling.md) | Production evolution path per area (deliberately not built now). |
+| [CLAUDE.md](CLAUDE.md) | Guardrails and architecture guide for AI/dev agents in this repo. |
+
+## Decisions, at a glance
+
+Raw SQL (no ORM) to showcase schema + performance · single repo, two workspaces · worker + Postgres `SKIP LOCKED` queue for crawling · JWT-in-httpOnly-cookie auth · timezone fixed to America/Toronto (per the brief) · SEO thresholds aligned to Lighthouse/Yoast · console UI on a brand-aligned theme-token system. Every choice is sized to the challenge; the scale path for each is in [`docs/scaling.md`](docs/scaling.md). Full rationale in [`docs/decisions.md`](docs/decisions.md).
+
+## AI tools
+
+Built with **Claude Code** (Claude Opus) — used for architecture and planning, the documentation, and (incoming) implementation. Commits carry a `Co-Authored-By` trailer for transparency.
+
+## Git workflow
+
+`main` (release) · `develop` (work in progress) · `feature/*` branches merged into `develop`, with small incremental commits.
