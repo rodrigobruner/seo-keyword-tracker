@@ -9,6 +9,7 @@ loadDotenv({ path: resolve(__dirname, '../../../.env') });
 // Validated, typed environment. The process refuses to start on invalid config
 // (fail fast) — notably a SESSION_SECRET that is too short.
 const EnvSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.string().url(),
   PORT: z.coerce.number().int().positive().default(4000),
   SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters'),
