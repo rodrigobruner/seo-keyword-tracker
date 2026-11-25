@@ -88,7 +88,7 @@ export class PageRepository {
     const items = await this.pool.query<ListRow>(
       `SELECT p.id, p.url, p.title, p.client_id, c.name AS client_name,
          (SELECT count(*)::int FROM seo_issues si WHERE si.page_id = p.id) AS issue_count,
-         COALESCE((SELECT array_agg(k.text ORDER BY pk.relevance DESC)
+         COALESCE((SELECT array_agg(k.text::text ORDER BY pk.relevance DESC)
                    FROM page_keywords pk JOIN keywords k ON k.id = pk.keyword_id
                    WHERE pk.page_id = p.id), '{}') AS keywords,
          lp.best_position
