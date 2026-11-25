@@ -16,8 +16,9 @@ const MIN_HISTORY_DAYS = 90;
 const RNG_SEED = 0x5eed_1234;
 const BATCH_ROWS = 10_000;
 
-// Demo accounts (documented in the README). Same password for both.
-const SEED_PASSWORD = 'seo-demo-2026';
+// Demo accounts (documented in the README). Same password for both; the password
+// comes from SEED_PASSWORD (see .env.example) so it isn't hardcoded in source.
+const SEED_PASSWORD = process.env.SEED_PASSWORD;
 const ACCOUNTS = [
   { email: 'alex@agency.test', client: 'Semrush', url: 'https://www.semrush.com' },
   { email: 'sam@agency.test', client: 'Yoast', url: 'https://yoast.com' },
@@ -39,6 +40,9 @@ function hostOf(url: string): string {
 }
 
 async function seed(): Promise<void> {
+  if (!SEED_PASSWORD) {
+    throw new Error('SEED_PASSWORD is not set — copy .env.example to .env (see README).');
+  }
   const rng = mulberry32(RNG_SEED);
   const repo = new PgCrawlRepository(pool);
   const fetchText = createFetchText();
