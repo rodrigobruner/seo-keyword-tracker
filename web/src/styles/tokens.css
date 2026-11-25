@@ -57,6 +57,19 @@
   --sev-low: var(--grey-400);
   --sev-ok: var(--ps-green);
 
+  /* Chart series — distinguishable brand colours, read at runtime by Recharts
+     (no hex is duplicated in JS; see web/src/lib/theme.ts). */
+  --chart-1: var(--ps-primary);
+  --chart-2: var(--ps-navy);
+  --chart-3: var(--ps-error);
+  --chart-4: var(--ps-sky);
+  --chart-5: var(--ps-secondary-600);
+  --chart-6: var(--grey-700);
+  --chart-grid: var(--color-border);
+  --chart-axis: var(--color-text-muted);
+  --trend-up: var(--ps-green);
+  --trend-down: var(--ps-error);
+
   /* ---- Typography (brand fonts: Fontshare, free) ---- */
   --font-sans: 'Satoshi', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-headings: 'Switzer', var(--font-sans);
