@@ -215,6 +215,7 @@ A unit test proves User A cannot reach User B's page by changing the id in the U
 6. Seed (crawl + ≥50k generation), idempotent + reproducible.
 7. Frontend: 4 screens + auth context + history chart/table.
 8. README (1 page) + polish + commit-history review.
+9. **Release:** merge `develop → main` (`--no-ff`) so `main` is the submittable version — the default branch the reviewer clones. Until this step `main` stays at the baseline (behind `develop`) by design.
 
 ---
 

@@ -48,3 +48,5 @@ Built with **Claude Code** (Claude Opus) — used for architecture and planning,
 ## Git workflow
 
 `main` (release) · `develop` (work in progress) · `feature/*` branches merged into `develop`, with small incremental commits.
+
+**Final release:** before submitting, merge `develop → main` (`--no-ff`) so `main` holds the complete, runnable app — `main` is the branch a reviewer sees by default. Until then `main` intentionally stays at the baseline and sits "behind" `develop`.
