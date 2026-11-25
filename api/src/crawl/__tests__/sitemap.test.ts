@@ -20,7 +20,7 @@ const urlsetXml = (locs: string[]) =>
 
 /** fetchText fake backed by a URL→content map; unknown URLs resolve to null. */
 function fakeFetch(map: Record<string, string>): FetchText {
-  return async (url: string) => (url in map ? map[url] : null);
+  return async (url: string) => map[url] ?? null;
 }
 
 describe('discoverBlogPostUrls', () => {
