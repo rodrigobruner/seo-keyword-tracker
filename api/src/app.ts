@@ -6,6 +6,8 @@ import type { Pool } from 'pg';
 import { pool as sharedPool } from './db/pool';
 import { env } from './config/env';
 import { authRouter } from './modules/auth/auth.routes';
+import { clientsRouter } from './modules/clients/clients.routes';
+import { pagesRouter } from './modules/pages/pages.routes';
 import { errorHandler, notFound } from './middleware/error';
 
 // Express app factory (kept separate from the HTTP listener so integration tests
@@ -24,7 +26,8 @@ export function createApp(pool: Pool = sharedPool): Express {
     res.json({ status: 'ok' });
   });
   app.use('/auth', authRouter(pool));
-  // /clients and /pages routers are mounted in the next slice.
+  app.use('/clients', clientsRouter(pool));
+  app.use('/pages', pagesRouter(pool));
 
   app.use(notFound);
   app.use(errorHandler);
