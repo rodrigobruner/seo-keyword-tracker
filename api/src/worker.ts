@@ -1,23 +1,68 @@
 import { env } from './config/env';
-import { closePool } from './db/pool';
+import { pool, closePool } from './db/pool';
+import { createFetchText } from './crawl/http';
+import { crawlClient } from './crawl/crawl-client';
+import { PgCrawlRepository } from './repositories/crawl-repository';
+import { PgCrawlJobRepository } from './repositories/crawl-job-repository';
 
-// Crawl queue worker — a second entrypoint of the `api` workspace (shares the
-// db pool, config, and crawl logic with the API). The full dequeue loop
-// (SELECT ... FOR UPDATE SKIP LOCKED → crawlClient → reaper) lands in the crawl
-// phase; this is the runnable skeleton.
+// Crawl queue worker — a second entrypoint of the `api` workspace. Drains
+// crawl_jobs via SELECT ... FOR UPDATE SKIP LOCKED (so N replicas are safe) and
+// runs crawlClient for each. A reaper requeues jobs stuck past the visibility
+// timeout (crash recovery).
+
 const POLL_INTERVAL_MS = 1000;
-let running = true;
+const IDLE_DELAY_MS = 1000;
+const VISIBILITY_TIMEOUT_MS = 5 * 60_000;
+const REAP_EVERY_MS = 60_000;
 
-async function tick(): Promise<void> {
-  // TODO(crawl phase): claim a crawl_jobs row via SKIP LOCKED and process it.
+const workerId = `worker-${process.pid}`;
+const repo = new PgCrawlRepository(pool);
+const jobs = new PgCrawlJobRepository(pool);
+const fetchText = createFetchText();
+
+let running = true;
+let lastReapAt = 0;
+
+async function processOne(): Promise<boolean> {
+  const job = await jobs.claimNext(workerId);
+  if (!job) return false;
+  try {
+    await crawlClient(job.clientId, job.websiteUrl, { fetchText, repo });
+    await jobs.complete(job.id);
+  } catch (err) {
+    await jobs.fail(job.id, err instanceof Error ? err.message : String(err));
+  }
+  return true;
+}
+
+async function maybeReap(now: number): Promise<void> {
+  if (now - lastReapAt < REAP_EVERY_MS) return;
+  lastReapAt = now;
+  try {
+    const requeued = await jobs.reapStuck(VISIBILITY_TIMEOUT_MS);
+    if (requeued > 0) console.log(`[worker] reaped ${requeued} stuck job(s)`);
+  } catch (err) {
+    console.error('[worker] reaper error:', err);
+  }
 }
 
 async function main(): Promise<void> {
-  console.log(`[worker] started (timezone ${env.APP_TIMEZONE})`);
+  console.log(`[worker] ${workerId} started (timezone ${env.APP_TIMEZONE})`);
   while (running) {
-    await tick();
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+    await maybeReap(Date.now());
+    let worked = false;
+    try {
+      worked = await processOne();
+    } catch (err) {
+      console.error('[worker] loop error:', err);
+    }
+    if (!worked) await sleep(IDLE_DELAY_MS);
+    else await sleep(POLL_INTERVAL_MS);
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function shutdown(): Promise<void> {
