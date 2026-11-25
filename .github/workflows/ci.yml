@@ -29,6 +29,7 @@ jobs:
       DATABASE_URL: postgres://app:app@localhost:5432/seo_tracker_test
       SESSION_SECRET: ci-only-secret-ci-only-secret-0123456789
       APP_TIMEZONE: America/Toronto
+      RUN_DB_TESTS: '1'
 
     steps:
       - uses: actions/checkout@v4
@@ -41,4 +42,5 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run migrate # schema for the DB integration tests
       - run: npm test
