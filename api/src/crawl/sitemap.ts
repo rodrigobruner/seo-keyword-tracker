@@ -51,6 +51,13 @@ const NEGATIVE_MARKERS = ['tag', 'category', 'categories', 'author', 'product', 
 //   /wp-sitemap.xml       WordPress core 5.5+ native sitemap
 //   *.gz                  gzipped variants (allowed by the protocol)
 //   /sitemap.txt          the protocol's plain-text format
+//
+// These probes are ROOT-ONLY by design. Per sitemaps.org a sitemap may live at a
+// non-root path (e.g. /catalog/sitemap.xml), but such a sitemap is discoverable
+// only when *declared* — via robots.txt, a homepage <link rel="sitemap">, or as
+// an index child (all handled above/below). We deliberately do not guess non-root
+// paths: it is combinatorial and is precisely what declaration exists to avoid.
+// See docs/scaling.md → Crawl pipeline for the boundary + production path.
 const FALLBACK_PATHS = [
   '/sitemap.xml',
   '/sitemap_index.xml',
