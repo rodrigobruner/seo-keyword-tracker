@@ -1,4 +1,10 @@
+import { resolve } from 'node:path';
+import { config as loadDotenv } from 'dotenv';
 import { z } from 'zod';
+
+// Load .env from the repo root when present (dev). In production real env vars
+// are set and the file is absent — dotenv is a no-op then.
+loadDotenv({ path: resolve(__dirname, '../../../.env') });
 
 // Validated, typed environment. The process refuses to start on invalid config
 // (fail fast) — notably a SESSION_SECRET that is too short.
