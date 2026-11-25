@@ -37,6 +37,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # Production dependencies must stay vulnerability-free (dev-only advisories are allowed).
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
