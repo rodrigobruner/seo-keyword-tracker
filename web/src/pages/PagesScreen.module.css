@@ -93,6 +93,14 @@
 .pageTitle {
   font-weight: var(--weight-semibold);
   font-size: var(--text-sm);
+  display: inline-block;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.pageTitle:hover {
+  color: var(--color-link);
+  text-decoration: underline;
 }
 
 .pageUrl {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { clientsApi, pagesApi, type PagesQuery } from '../lib/api';
 import styles from './PagesScreen.module.css';
@@ -93,9 +93,9 @@ export default function PagesScreen() {
               {pages.data?.items.map((p) => (
                 <tr key={p.id}>
                   <td>
-                    <div className={styles.pageTitle} title={p.title ?? undefined}>
+                    <Link to={`/pages/${p.id}`} className={styles.pageTitle} title={p.title ?? undefined}>
                       {p.title ?? p.url}
-                    </div>
+                    </Link>
                     <div className={styles.pageUrl}>{p.url}</div>
                     <div className={styles.clientTag}>{p.clientName}</div>
                   </td>
