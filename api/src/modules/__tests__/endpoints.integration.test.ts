@@ -13,6 +13,7 @@ interface ListItem {
   id: number;
   url: string;
   clientName: string;
+  keywords: string[];
   bestPosition: number | null;
   issueCount: number;
 }
@@ -101,6 +102,8 @@ describe.skipIf(!RUN)('API endpoints integration', () => {
     const pageA = list.body.items.find((p: ListItem) => p.id === id.pageA);
     expect(pageA.bestPosition).toBe(3); // min(latest 3, latest 12)
     expect(pageA.issueCount).toBe(1);
+    expect(Array.isArray(pageA.keywords)).toBe(true); // citext[] must parse to a JS array
+    expect(pageA.keywords).toContain('seo guide');
   });
 
   it('snapshots returns one series per keyword within range', async () => {
