@@ -17,6 +17,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "npm run test --workspaces --if-present",
+    "check": "npm run lint && npm run typecheck && npm run test",
     "migrate": "npm -w api run migrate",
     "seed": "npm -w api run seed"
   },
