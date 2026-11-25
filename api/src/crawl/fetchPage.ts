@@ -69,11 +69,19 @@ export function parsePage(html: string, url: string): PageContent {
     .get()
     .filter((l) => l.href);
 
-  // Body text for word count + keyword body zone: drop non-content nodes.
-  const $body = $('body').clone();
-  $body.find('script, style, noscript, template').remove();
-  const bodyText = collapse($body.text());
-  const wordCount = bodyText ? bodyText.split(/\s+/).length : 0;
+  // Body text for word count + the keyword body zone. Prefer the main content
+  // container and strip boilerplate (nav/header/footer/…) so keywords reflect the
+  // article, not the site chrome. Appending a space to each element prevents
+  // adjacent element text from gluing together (e.g. "FactsAffiliate program").
+  const article = $('article').first();
+  const main = $('main').first();
+  const $content = (article.length ? article : main.length ? main : $('body')).clone();
+  $content.find('script, style, noscript, template, nav, header, footer, aside, form').remove();
+  $content.find('*').each((_, el) => {
+    $(el).append(' ');
+  });
+  const bodyText = collapse($content.text());
+  const wordCount = bodyText ? bodyText.split(/\s+/).filter(Boolean).length : 0;
 
   return {
     url,

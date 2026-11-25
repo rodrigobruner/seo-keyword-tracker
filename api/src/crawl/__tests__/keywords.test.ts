@@ -49,6 +49,15 @@ describe('extractKeywords', () => {
     expect(texts).not.toContain('zephyr'); // lone body mention falls below minScore
   });
 
+  it('caps keyphrase length, dropping long run-on phrases', () => {
+    const kws = extractKeywords(
+      makeContent({ title: 'alpha beta gamma. one two three four five six seven' }),
+    );
+    const texts = kws.map((k) => k.text);
+    expect(texts).toContain('alpha beta gamma'); // 3 words, kept
+    expect(texts.every((t) => t.split(' ').length <= 4)).toBe(true); // nothing longer
+  });
+
   it('caps the result at topN', () => {
     const words = Array.from({ length: 12 }, (_, i) => `termword${String.fromCharCode(97 + i)}`);
     const kws = extractKeywords(makeContent({ title: words.join(' and ') }));

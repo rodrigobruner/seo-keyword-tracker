@@ -37,6 +37,20 @@ describe('parsePage', () => {
     expect(c.wordCount).toBeGreaterThan(5);
   });
 
+  it('strips boilerplate and separates adjacent element text', () => {
+    const html = `<html><body>
+      <nav><a>Home</a><a>Pricing plans</a></nav>
+      <div><span>Widget</span><span>reviews</span> and buying guide</div>
+      <footer><a>Privacy policy</a></footer>
+      <script>var z = 1;</script>
+    </body></html>`;
+    const c = parsePage(html, 'https://x.com/p');
+    expect(c.bodyText).not.toContain('Pricing plans'); // nav removed
+    expect(c.bodyText).not.toContain('Privacy'); // footer removed
+    expect(c.bodyText).not.toContain('z = 1'); // script removed
+    expect(c.bodyText).toContain('Widget reviews'); // elements separated, not glued
+  });
+
   it('reports missing title and h1 as empty', () => {
     const c = parsePage('<html><body><p>hi there</p></body></html>', 'https://x.com/');
     expect(c.hasTitle).toBe(false);

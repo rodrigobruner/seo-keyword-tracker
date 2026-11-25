@@ -13,6 +13,7 @@ export interface KeywordScore {
 
 export interface KeywordOptions {
   minTokenLength?: number;
+  maxPhraseLength?: number;
   minScore?: number;
   topN?: number;
 }
@@ -60,6 +61,7 @@ function rakeWordScores(phrases: string[][]): Map<string, number> {
 
 export function extractKeywords(content: PageContent, opts: KeywordOptions = {}): KeywordScore[] {
   const minTokenLength = opts.minTokenLength ?? KEYWORD_OPTIONS.minTokenLength;
+  const maxPhraseLength = opts.maxPhraseLength ?? KEYWORD_OPTIONS.maxPhraseLength;
   const minScore = opts.minScore ?? KEYWORD_OPTIONS.minScore;
   const topN = opts.topN ?? KEYWORD_OPTIONS.topN;
 
@@ -80,7 +82,7 @@ export function extractKeywords(content: PageContent, opts: KeywordOptions = {})
     if (!zone.text) continue;
     const seenInZone = new Set<string>();
     for (const words of candidatePhrases(zone.text, minTokenLength)) {
-      if (words.length === 0) continue;
+      if (words.length === 0 || words.length > maxPhraseLength) continue;
       const key = words.join(' ');
       allPhrases.push(words);
       phraseWords.set(key, words);

@@ -1,6 +1,6 @@
 import http from 'node:http';
 import https from 'node:https';
-import { lookup as dnsLookup, type LookupAddress } from 'node:dns';
+import { lookup as dnsLookup, type LookupAddress, type LookupOptions } from 'node:dns';
 import { isIP, type LookupFunction } from 'node:net';
 import type { FetchText } from './sitemap';
 
@@ -116,16 +116,25 @@ export function assertHttpUrl(rawUrl: string): URL {
 
 // Resolves the hostname, rejects if ANY resolved IP is non-public, and pins the
 // connection to a validated address (closing the rebinding window).
-const safeLookup: LookupFunction = (hostname, _options, callback) => {
-  dnsLookup(hostname, { all: true }, (err, addresses: LookupAddress[]) => {
-    if (err) return callback(err, '', 0);
-    const blocked = addresses.find((a) => isBlockedAddress(a.address));
-    if (blocked) {
-      return callback(new SsrfError(`${hostname} resolves to blocked ${blocked.address}`), '', 0);
-    }
-    const first = addresses[0];
-    if (!first) return callback(new SsrfError(`No DNS results for ${hostname}`), '', 0);
-    callback(null, first.address, first.family);
+const safeLookup: LookupFunction = (hostname, options, callback) => {
+  const opts: LookupOptions = typeof options === 'object' && options !== null ? options : {};
+  dnsLookup(hostname, { ...opts, all: true }, (err, addresses) => {
+    // LookupFunction types the callback for the single-address form, but when the
+    // caller requests `all` (Node's autoSelectFamily/happy-eyeballs does), it must
+    // receive the array form — hence the cast.
+    const cb = callback as unknown as (
+      err: NodeJS.ErrnoException | null,
+      address?: string | LookupAddress[],
+      family?: number,
+    ) => void;
+    if (err) return cb(err);
+    const list = addresses as LookupAddress[];
+    const blocked = list.find((a) => isBlockedAddress(a.address));
+    if (blocked) return cb(new SsrfError(`${hostname} resolves to a blocked address ${blocked.address}`));
+    const first = list[0];
+    if (!first) return cb(new SsrfError(`No DNS results for ${hostname}`));
+    if (opts.all) cb(null, list);
+    else cb(null, first.address, first.family);
   });
 };
 
@@ -214,7 +223,8 @@ export function createFetchText(options: FetchOptions = {}): FetchText {
         return res.body;
       }
       return null; // too many redirects
-    } catch {
+    } catch (err) {
+      if (process.env.CRAWL_DEBUG) console.error('[fetch]', current, err);
       return null; // SSRF / timeout / oversize / network → unfetchable
     }
   };
