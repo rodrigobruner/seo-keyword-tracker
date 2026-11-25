@@ -1,29 +1,21 @@
-import styles from './App.module.css';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import SignIn from './pages/SignIn';
+import PagesScreen from './pages/PagesScreen';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { AppShell } from './components/AppShell';
 
-// Scaffold shell: the console layout (navy sidebar + light content) wired to the
-// design tokens. Real screens (Sign in, Pages, Detail, Add client) arrive in the
-// frontend phase.
 export default function App() {
   return (
-    <div className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <div className={styles.brand}>SEO Tracker</div>
-        <nav className={styles.nav}>
-          <a className={`${styles.navItem} ${styles.active}`} href="#">
-            Pages
-          </a>
-          <a className={styles.navItem} href="#">
-            Clients
-          </a>
-          <a className={styles.navItem} href="#">
-            Add client
-          </a>
-        </nav>
-      </aside>
-      <main className={styles.content}>
-        <h1>SEO Keyword Tracker</h1>
-        <p className={styles.muted}>Scaffold ready — screens arrive in the next phases.</p>
-      </main>
-    </div>
+    <Routes>
+      <Route path="/login" element={<SignIn />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppShell />}>
+          <Route path="/" element={<Navigate to="/pages" replace />} />
+          <Route path="/pages" element={<PagesScreen />} />
+          {/* page detail and add-client arrive in the next slice */}
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/pages" replace />} />
+    </Routes>
   );
 }
