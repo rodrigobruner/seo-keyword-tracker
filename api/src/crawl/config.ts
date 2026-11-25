@@ -14,6 +14,8 @@ export const ZONE_WEIGHTS = {
 export const KEYWORD_OPTIONS = {
   /** Minimum token length to be part of a candidate keyphrase. */
   minTokenLength: 3,
+  /** Max words in a keyphrase (drops long run-on boilerplate phrases). */
+  maxPhraseLength: 4,
   /** Drop candidates scoring below this (filters lone-mention noise). */
   minScore: 2,
   /** How many keywords to keep. */
