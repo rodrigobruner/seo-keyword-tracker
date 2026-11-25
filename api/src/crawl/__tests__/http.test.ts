@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isBlockedAddress, assertHttpUrl, SsrfError } from '../http';
+import zlib from 'node:zlib';
+import { isBlockedAddress, assertHttpUrl, SsrfError, decodeBody } from '../http';
 
 describe('isBlockedAddress', () => {
   it('blocks private, loopback, link-local and reserved IPv4', () => {
@@ -60,5 +61,25 @@ describe('assertHttpUrl', () => {
     expect(() => assertHttpUrl('http://127.0.0.1/')).toThrow(SsrfError);
     expect(() => assertHttpUrl('http://169.254.169.254/latest/meta-data')).toThrow(SsrfError);
     expect(() => assertHttpUrl('http://[::1]/')).toThrow(SsrfError);
+  });
+});
+
+describe('decodeBody', () => {
+  const MAX = 1_000_000;
+
+  it('passes plain utf8 bodies through unchanged', () => {
+    expect(decodeBody(Buffer.from('<urlset/>', 'utf8'), MAX)).toBe('<urlset/>');
+  });
+
+  it('gunzips a .xml.gz payload (magic 1f 8b)', () => {
+    const xml = '<?xml version="1.0"?><urlset><url><loc>https://x.com/a/</loc></url></urlset>';
+    const gz = zlib.gzipSync(Buffer.from(xml, 'utf8'));
+    expect(gz[0]).toBe(0x1f);
+    expect(decodeBody(gz, MAX)).toBe(xml);
+  });
+
+  it('returns empty on a gzip bomb that exceeds maxBytes', () => {
+    const gz = zlib.gzipSync(Buffer.alloc(100_000, 0x41)); // 100k of "A" → tiny gzip
+    expect(decodeBody(gz, 1024)).toBe('');
   });
 });
