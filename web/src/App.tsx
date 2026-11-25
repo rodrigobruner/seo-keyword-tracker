@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import SignIn from './pages/SignIn';
 import PagesScreen from './pages/PagesScreen';
+import PageDetail from './pages/PageDetail';
+import AddClient from './pages/AddClient';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppShell } from './components/AppShell';
 
@@ -12,7 +14,8 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route path="/" element={<Navigate to="/pages" replace />} />
           <Route path="/pages" element={<PagesScreen />} />
-          {/* page detail and add-client arrive in the next slice */}
+          <Route path="/pages/:id" element={<PageDetail />} />
+          <Route path="/clients/new" element={<AddClient />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/pages" replace />} />

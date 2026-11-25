@@ -116,6 +116,7 @@ export const authApi = {
 
 export const clientsApi = {
   list: () => get<{ items: ClientSummary[] }>('/clients'),
+  get: (id: number) => get<ClientSummary>(`/clients/${id}`),
   create: (name: string, websiteUrl: string) =>
     post<ClientSummary>('/clients', { name, websiteUrl }),
 };

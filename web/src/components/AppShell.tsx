@@ -15,6 +15,9 @@ export function AppShell() {
           <NavLink to="/pages" className={navItemClass}>
             Pages
           </NavLink>
+          <NavLink to="/clients/new" className={navItemClass}>
+            Add client
+          </NavLink>
         </nav>
         <div className={styles.footer}>
           <span className={styles.email} title={user?.email}>
