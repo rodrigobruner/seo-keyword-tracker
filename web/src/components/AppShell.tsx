@@ -10,13 +10,16 @@ export function AppShell() {
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
-        <div className={styles.brand}>SEO Tracker</div>
+        <div className={styles.brand}>
+          <img src="/logo.svg" alt="" className={styles.brandLogo} />
+          <span>SEO Tracker</span>
+        </div>
         <nav className={styles.nav}>
           <NavLink to="/pages" className={navItemClass}>
             Pages
           </NavLink>
-          <NavLink to="/clients/new" className={navItemClass}>
-            Add client
+          <NavLink to="/clients" className={navItemClass}>
+            Clients
           </NavLink>
         </nav>
         <div className={styles.footer}>

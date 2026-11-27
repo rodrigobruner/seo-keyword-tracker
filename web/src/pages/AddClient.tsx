@@ -41,9 +41,13 @@ export default function AddClient() {
   // worker offline) so the user isn't left staring at an endless spinner.
   const slow = startedAt != null && !done && Date.now() - startedAt > SLOW_AFTER_MS;
 
-  // When a crawl finishes, the pages/list caches are stale — refresh once.
+  // When a crawl finishes, the pages list and the clients list (status/page
+  // count) are stale — refresh both once.
   useEffect(() => {
-    if (done) void queryClient.invalidateQueries({ queryKey: ['pages'] });
+    if (done) {
+      void queryClient.invalidateQueries({ queryKey: ['pages'] });
+      void queryClient.invalidateQueries({ queryKey: ['clients'] });
+    }
   }, [done, queryClient]);
 
   function onSubmit(e: FormEvent) {
@@ -66,15 +70,15 @@ export default function AddClient() {
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
-        <h1>Add a client</h1>
+        <h1>Clients</h1>
         <p className={styles.sub}>
-          We discover the site&apos;s blog sitemap, crawl the first pages, and derive keywords and
-          SEO issues. No rank snapshots are created here — those come from the scheduled seed.
+          Point the crawler at any website and we'll work out its blog pages from the URL alone.
         </p>
       </header>
 
       <div className={styles.grid}>
         <form className={styles.card} onSubmit={onSubmit}>
+          <h2 className={styles.cardTitle}>Add a client</h2>
           <label className={styles.field}>
             <span>Client name</span>
             <input
@@ -110,8 +114,99 @@ export default function AddClient() {
           )}
         </form>
 
-        {activeId != null && <CrawlStatus client={client} slow={slow} />}
+        {activeId == null ? <HowItWorks /> : <CrawlStatus client={client} slow={slow} />}
       </div>
+
+      <ClientsList />
+    </div>
+  );
+}
+
+function ClientsList() {
+  const queryClient = useQueryClient();
+  const clients = useQuery({ queryKey: ['clients'], queryFn: () => clientsApi.list() });
+  const [confirmId, setConfirmId] = useState<number | null>(null);
+
+  const remove = useMutation({
+    mutationFn: (id: number) => clientsApi.remove(id),
+    onSuccess: () => {
+      setConfirmId(null);
+      void queryClient.invalidateQueries({ queryKey: ['clients'] });
+      void queryClient.invalidateQueries({ queryKey: ['pages'] });
+    },
+  });
+
+  const items = clients.data?.items ?? [];
+  if (items.length === 0) return null; // nothing to manage yet
+
+  return (
+    <section className={styles.listCard}>
+      <h2 className={styles.cardTitle}>Your clients</h2>
+      <ul className={styles.clientList}>
+        {items.map((c) => (
+          <li key={c.id} className={styles.clientRow}>
+            <div className={styles.clientMain}>
+              <span className={styles.clientName}>{c.name}</span>
+              <span className={styles.clientHost}>{c.host}</span>
+            </div>
+            <span className={`${styles.badge} ${styles[`st-${c.crawlStatus}`]}`}>{c.crawlStatus}</span>
+            <span className={styles.clientPages}>{c.pageCount} pages</span>
+            <Link className={styles.viewLink} to={`/pages?clientId=${c.id}`}>
+              View
+            </Link>
+            {confirmId === c.id ? (
+              <span className={styles.confirm}>
+                <button
+                  className={styles.confirmYes}
+                  onClick={() => remove.mutate(c.id)}
+                  disabled={remove.isPending}
+                >
+                  {remove.isPending ? 'Deleting…' : 'Confirm'}
+                </button>
+                <button className={styles.confirmNo} onClick={() => setConfirmId(null)}>
+                  Cancel
+                </button>
+              </span>
+            ) : (
+              <button
+                className={styles.deleteBtn}
+                onClick={() => setConfirmId(c.id)}
+                aria-label={`Delete ${c.name}`}
+              >
+                Delete
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+      {remove.isError && (
+        <div className={styles.error}>Could not delete the client. Please try again.</div>
+      )}
+    </section>
+  );
+}
+
+function HowItWorks() {
+  const steps = [
+    "We find the site's blog sitemap from the URL alone, with no configuration.",
+    'We crawl the first 15 blog posts, in the order the sitemap lists them.',
+    'For each page we extract the likely keywords and detect SEO issues.',
+  ];
+  return (
+    <div className={styles.card}>
+      <h2 className={styles.cardTitle}>How it works</h2>
+      <ol className={styles.steps}>
+        {steps.map((text, i) => (
+          <li key={i}>
+            <span className={styles.stepNum}>{i + 1}</span>
+            <span>{text}</span>
+          </li>
+        ))}
+      </ol>
+      <p className={styles.tip}>
+        Works with any website that has a blog. Just paste its URL above. Crawling runs in the
+        background, and your client appears in the list below when it&apos;s ready.
+      </p>
     </div>
   );
 }

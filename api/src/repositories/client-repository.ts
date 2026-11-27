@@ -84,4 +84,15 @@ export class ClientRepository {
       throw err;
     }
   }
+
+  /** Delete a client the user owns. Cascades to its pages, keywords links, issues,
+   *  rank snapshots and crawl jobs (FKs are ON DELETE CASCADE). Returns false if
+   *  the client doesn't exist or isn't the user's (caller maps to 404). */
+  async deleteForUser(id: number, userId: number): Promise<boolean> {
+    const res = await this.pool.query(`DELETE FROM clients WHERE id = $1 AND user_id = $2`, [
+      id,
+      userId,
+    ]);
+    return (res.rowCount ?? 0) > 0;
+  }
 }

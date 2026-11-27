@@ -60,7 +60,7 @@ const MAX_KEYWORDS_IN_LIST = 5;
 // Shared tenancy + filter predicate ($1 user, $2 clientId, $3 search).
 const WHERE = `c.user_id = $1
   AND ($2::bigint IS NULL OR p.client_id = $2)
-  AND ($3::text IS NULL OR p.url ILIKE $3 OR EXISTS (
+  AND ($3::text IS NULL OR p.url ILIKE $3 OR p.title ILIKE $3 OR EXISTS (
     SELECT 1 FROM page_keywords pk JOIN keywords k ON k.id = pk.keyword_id
     WHERE pk.page_id = p.id AND k.text ILIKE $3))`;
 

@@ -15,6 +15,8 @@ import { pagesApi, type KeywordSeries } from '../lib/api';
 import { formatDateShort, formatDateLong, torontoYmd, torontoMidnightUtcIso } from '../lib/datetime';
 import { readToken, seriesColor } from '../lib/theme';
 import { SegmentedControl } from '../components/SegmentedControl';
+import { EmptyState } from '../components/EmptyState';
+import { ChartIcon } from '../components/icons';
 import styles from './PageDetail.module.css';
 
 const MAX_SERIES = 8; // keep the chart/table legible
@@ -192,7 +194,11 @@ export default function PageDetail() {
         ) : snapshots.isLoading ? (
           <div className={styles.state}>Loading history…</div>
         ) : series.length === 0 ? (
-          <p className={styles.empty}>No rank snapshots in this range.</p>
+          <EmptyState
+            icon={<ChartIcon />}
+            title="No rank history"
+            description="No snapshots for this page in the selected range. Try a wider range."
+          />
         ) : view === 'chart' ? (
           <RankChart series={series} />
         ) : (

@@ -65,5 +65,19 @@ export function clientsRouter(pool: Pool): Router {
     res.status(201).json(await clients.findByIdForUser(result.id, req.userId!));
   }));
 
+  router.delete('/:id', asyncHandler(async (req, res) => {
+    const id = parseId(req.params.id);
+    if (id === null) {
+      res.status(400).json({ error: 'invalid id' });
+      return;
+    }
+    const deleted = await clients.deleteForUser(id, req.userId!);
+    if (!deleted) {
+      res.status(404).json({ error: 'not found' }); // absent or another user's
+      return;
+    }
+    res.status(204).end();
+  }));
+
   return router;
 }
