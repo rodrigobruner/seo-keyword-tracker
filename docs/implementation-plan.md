@@ -184,7 +184,7 @@ A unit test proves User A cannot reach User B's page by changing the id in the U
 
 ## Scale (≥50k snapshots, responsive) + timezone
 
-- 2 users × 1 client × 15 pages = 30 pages; ~8 keywords/page ⇒ ~240 pairs. Seed generates **one per pair per day** over `ceil(50000/pairs)+margin` (~**400 days**) → guarantees ≥50k rows regardless of the pair count. Bulk insert via **`COPY`** (`pg-copy-streams`) or multi-row `INSERT` in ~5k batches. **Seedable** RNG (random walk 1..100, small daily deltas) → reproducible and realistic charts.
+- 2 users × 1 client × 15 pages = 30 pages; ~8 keywords/page ⇒ ~240 pairs. Seed generates **one per pair per day** over `ceil(50000/pairs)+margin` (~**400 days**) → guarantees ≥50k rows regardless of the pair count. Bulk insert via batched multi-row `unnest` inserts (~10k rows/batch). **Seedable** RNG (random walk 1..100, small daily deltas) → reproducible and realistic charts.
 - **Latest position (hot path, list):** SQL with `DISTINCT ON (page_id, keyword_id) … ORDER BY page_id, keyword_id, captured_at DESC` to get each pair's latest, inside a CTE, then aggregate per page to the **best (lowest) position on the most recent date**. Fast on the `(page_id, keyword_id, captured_at DESC)` index; `EXPLAIN ANALYZE` documented in the README (note: materialized `rank_latest` if it grows a lot).
 - **Timezone:** `captured_at` in **UTC** (timestamptz). Display converted to **America/Toronto** (client, `Intl` with `timeZone`); date filter converts the picked Toronto dates to UTC bounds (server, `AT TIME ZONE`). Both read the **same configured zone** (a single env constant, default `America/Toronto`) — server stays otherwise pure-UTC. Convention explained in the README.
 
@@ -199,7 +199,7 @@ A unit test proves User A cannot reach User B's page by changing the id in the U
 ## Auth / seed / CI / git
 
 - **Auth:** bcrypt for hashing; JWT in httpOnly cookie; CORS with credentials only in prod (dev uses the Vite proxy, same-origin).
-- **Seed (`seed/seed.ts`, committed, idempotent):** upsert 2 users (creds in README) + 2 clients (semrush, yoast), runs **the same** crawl routine, generates the snapshots (≥50k) via `COPY`. **Resilient to live sites:** timeouts + retries + realistic UA, and committed **fallback fixtures** (cached sitemap/HTML) so it never hard-fails if semrush/yoast is slow, changed, or blocks us.
+- **Seed (`seed/seed.ts`, committed, idempotent):** upsert 2 users (creds in README) + 2 clients (semrush, yoast), runs **the same** crawl routine, generates the snapshots (≥50k) via batched `unnest` inserts. **Resilient to live sites:** timeouts + retries + realistic UA, and committed **fallback fixtures** (cached sitemap/HTML) so it never hard-fails if semrush/yoast is slow, changed, or blocks us.
 - **CI (`.github/workflows/ci.yml`):** install → eslint → tsc → vitest on PR/push to `develop`.
 - **Git:** `main` + `develop` + `feature/*`; incremental PRs; `.env.example` with no secrets.
 

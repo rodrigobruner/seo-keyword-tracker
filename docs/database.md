@@ -234,7 +234,7 @@ A reaper periodically resets jobs stuck in `RUNNING` past a visibility timeout b
 ## Seed & scale notes
 
 - ~30 pages × ~8 keywords ≈ 240 pairs; daily snapshots over ~400 days keeps `rank_snapshots` ≥ 50k regardless of the exact pair count.
-- Loaded via `COPY` (`pg-copy-streams`) with a **seedable RNG** (random walk, 1..100). Seed is **idempotent by rebuild**: inside a transaction, `TRUNCATE rank_snapshots` then `COPY` — re-running yields the same data.
+- Bulk-loaded with batched multi-row `unnest` inserts (~10k rows/batch) and a **seedable RNG** (random walk, 1..100). Seed is **idempotent by rebuild**: it `TRUNCATE`s `users, keywords RESTART IDENTITY CASCADE` (cascading to clients/pages/snapshots/issues) then re-inserts — re-running yields the same data.
 - Positions are `1..100` (invented; nothing queries Google).
 
 > Evolution path under real scale (partitioning, issue catalog, ranking dimensions, per-user timezone, etc.): see `scaling.md`.

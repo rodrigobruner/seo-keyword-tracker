@@ -52,7 +52,7 @@ Three subsystems carry most of the complexity and span multiple files — unders
 
 2. **Crawl + extraction pipeline (`api/src/crawl/*`, `api/src/repositories/crawl-job-repository.ts`, `api/src/worker.ts`)** — `crawl-client.ts` orchestrates discover → fetch 15 pages (cheerio, bounded concurrency, politeness delay) → derive keywords and SEO issues (both are **documented heuristics**, not an external API) → persist. Adding a client enqueues a `crawl_jobs` row; a **separate worker entrypoint** drains the queue via `SELECT … FOR UPDATE SKIP LOCKED` (durable, and horizontally scalable by running N worker containers), driving the `crawl_status` state machine (`PENDING→CRAWLING→READY|FAILED`) + `pages_done`/`pages_total` progress. The frontend polls until `READY`; a reaper requeues jobs stuck past a visibility timeout. Adding a client creates **no** rank snapshots (only the seed does).
 
-3. **Scale + the hot query (`api/src/repositories/page-repository.ts`, `seed/seed.ts`)** — the pages list needs each page's *latest position*. This is a `DISTINCT ON (page_id, keyword_id) … ORDER BY …, captured_at DESC` inside a CTE, backed by the composite index `(page_id, keyword_id, captured_at DESC)`. The seed bulk-loads ≥50k rows via `COPY` using a **seedable** RNG (reproducible random walk).
+3. **Scale + the hot query (`api/src/repositories/page-repository.ts`, `seed/seed.ts`)** — the pages list needs each page's *latest position*. This is a `DISTINCT ON (page_id, keyword_id) … ORDER BY …, captured_at DESC` inside a CTE, backed by the composite index `(page_id, keyword_id, captured_at DESC)`. The seed bulk-loads ≥50k rows via batched `unnest` inserts using a **seedable** RNG (reproducible random walk).
 
 ## Commands
 

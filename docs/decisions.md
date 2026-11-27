@@ -12,7 +12,7 @@ Why things are built the way they are. One short entry per decision, newest at t
 
 **Infra stays at root** — The infra surface is just `docker-compose.yml` (Postgres), `.github/workflows/` (pinned there by GitHub), and `.env.example`. An `infra/` dir would hold a single movable file and break the conventional "clone and run". Revisit if infra grows (app Dockerfiles, IaC, deploy scripts).
 
-**Backend stack** — Node + TypeScript + Express for a small REST API (Nest too heavy, Fastify no real gain here). `pg` + raw SQL for data, `zod` for input, `bcrypt` + JWT-in-an-httpOnly-cookie for auth. The crawler uses native `fetch` + `cheerio` + `fast-xml-parser`; `pg-copy-streams` loads the 50k seed; `vitest` for tests and `tsx` to run TS directly. Bias throughout: fewest dependencies, every pick favors what's being graded.
+**Backend stack** — Node + TypeScript + Express for a small REST API (Nest too heavy, Fastify no real gain here). `pg` + raw SQL for data, `zod` for input, `bcrypt` + JWT-in-an-httpOnly-cookie for auth. The crawler uses native `fetch` + `cheerio` + `fast-xml-parser`; the seed bulk-loads the 50k rows with batched `unnest` inserts (no extra dep); `vitest` for tests and `tsx` to run TS directly. Bias throughout: fewest dependencies, every pick favors what's being graded.
 
 **Node 24 LTS** — Node 20 hit end-of-life in April 2026, so we target the current well-established LTS: supported to April 2028, broad tooling support. (Node 26 is newer but had been LTS only weeks at the time.) Pinned via `.nvmrc`, `engines` in `package.json`, and the CI matrix.
 
