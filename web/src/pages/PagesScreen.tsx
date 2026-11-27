@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { clientsApi, pagesApi, type PagesQuery } from '../lib/api';
+import { EmptyState } from '../components/EmptyState';
+import { PagesIcon, SearchIcon } from '../components/icons';
 import styles from './PagesScreen.module.css';
 
 const PAGE_SIZE = 20;
@@ -81,7 +83,20 @@ export default function PagesScreen() {
       ) : pages.isError ? (
         <div className={styles.state}>Failed to load pages.</div>
       ) : total === 0 ? (
-        <div className={styles.state}>No pages found.</div>
+        q || clientId ? (
+          <EmptyState
+            icon={<SearchIcon />}
+            title="No pages match your filters"
+            description="Try a different search term or client."
+          />
+        ) : (
+          <EmptyState
+            icon={<PagesIcon />}
+            title="No pages yet"
+            description="Add a client and we'll crawl its blog pages — they'll show up here."
+            action={<Link to="/clients">Add a client</Link>}
+          />
+        )
       ) : (
         <>
           <table className={styles.table}>
