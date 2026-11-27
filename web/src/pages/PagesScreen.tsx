@@ -93,7 +93,7 @@ export default function PagesScreen() {
           <EmptyState
             icon={<PagesIcon />}
             title="No pages yet"
-            description="Add a client and we'll crawl its blog pages — they'll show up here."
+            description="Add a client and we'll crawl its blog pages. They'll show up here."
             action={<Link to="/clients">Add a client</Link>}
           />
         )

@@ -32,7 +32,7 @@ export interface CrawlResult {
 /** User-facing crawl-failure reasons (shown on the Add-client screen). */
 export const CRAWL_MESSAGES = {
   noSitemap:
-    "We couldn't find a blog sitemap for this site. We check robots.txt, a homepage sitemap link, and common paths — none pointed to a blog.",
+    "We couldn't find a blog sitemap for this site. We checked robots.txt, a homepage sitemap link, and common paths, but none pointed to a blog.",
   discoveryFailed: 'Sitemap discovery failed unexpectedly. Please try again.',
   allBlocked: (found: number): string =>
     `The site returned no crawlable pages (${found} found, all blocked or unreachable). It may restrict automated access.`,

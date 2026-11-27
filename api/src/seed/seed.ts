@@ -41,7 +41,7 @@ function hostOf(url: string): string {
 
 async function seed(): Promise<void> {
   if (!SEED_PASSWORD) {
-    throw new Error('SEED_PASSWORD is not set — copy .env.example to .env (see README).');
+    throw new Error('SEED_PASSWORD is not set. Copy .env.example to .env (see README).');
   }
   const rng = mulberry32(RNG_SEED);
   const repo = new PgCrawlRepository(pool);
@@ -91,7 +91,7 @@ async function generateSnapshots(rng: () => number): Promise<void> {
   ).rows;
 
   if (pairs.length === 0) {
-    console.warn('[seed] no (page, keyword) pairs — skipping snapshots (crawl produced nothing).');
+    console.warn('[seed] no (page, keyword) pairs, skipping snapshots (crawl produced nothing).');
     return;
   }
 

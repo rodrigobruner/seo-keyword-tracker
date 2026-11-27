@@ -72,7 +72,7 @@ export default function AddClient() {
       <header className={styles.header}>
         <h1>Clients</h1>
         <p className={styles.sub}>
-          Point the crawler at any website — we work out its blog pages from the URL alone.
+          Point the crawler at any website and we'll work out its blog pages from the URL alone.
         </p>
       </header>
 
@@ -188,7 +188,7 @@ function ClientsList() {
 
 function HowItWorks() {
   const steps = [
-    "We find the site's blog sitemap from the URL alone — no configuration.",
+    "We find the site's blog sitemap from the URL alone, with no configuration.",
     'We crawl the first 15 blog posts, in the order the sitemap lists them.',
     'For each page we extract the likely keywords and detect SEO issues.',
   ];
@@ -204,8 +204,8 @@ function HowItWorks() {
         ))}
       </ol>
       <p className={styles.tip}>
-        Works with any website that has a blog — just paste its URL above. Crawling runs in
-        the background; your client appears in the list below when it&apos;s ready.
+        Works with any website that has a blog. Just paste its URL above. Crawling runs in the
+        background, and your client appears in the list below when it&apos;s ready.
       </p>
     </div>
   );
