@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { clientsApi, ApiError, type ClientSummary } from '../lib/api';
+import { PlusIcon, TrashIcon } from '../components/icons';
 import styles from './AddClient.module.css';
 
 const POLL_MS = 2000;
@@ -105,10 +106,12 @@ export default function AddClient() {
 
           {activeId == null ? (
             <button className={styles.submit} type="submit" disabled={create.isPending}>
+              <PlusIcon size={18} />
               {create.isPending ? 'Adding…' : 'Add client & crawl'}
             </button>
           ) : (
             <button className={styles.secondary} type="button" onClick={reset}>
+              <PlusIcon size={16} />
               Add another client
             </button>
           )}
@@ -173,6 +176,7 @@ function ClientsList() {
                 onClick={() => setConfirmId(c.id)}
                 aria-label={`Delete ${c.name}`}
               >
+                <TrashIcon size={14} />
                 Delete
               </button>
             )}

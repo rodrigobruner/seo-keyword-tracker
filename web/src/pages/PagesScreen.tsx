@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { clientsApi, pagesApi, type PagesQuery } from '../lib/api';
 import { EmptyState } from '../components/EmptyState';
-import { AlertIcon, PagesIcon, SearchIcon } from '../components/icons';
+import { AlertIcon, PagesIcon, PlusIcon, RefreshIcon, SearchIcon } from '../components/icons';
 import styles from './PagesScreen.module.css';
 
 const PAGE_SIZE = 20;
@@ -85,7 +85,12 @@ export default function PagesScreen() {
           icon={<AlertIcon />}
           title="Couldn't load pages"
           description="Something went wrong while loading. Please try again."
-          action={<button onClick={() => void pages.refetch()}>Try again</button>}
+          action={
+            <button onClick={() => void pages.refetch()}>
+              <RefreshIcon size={16} />
+              Try again
+            </button>
+          }
         />
       ) : total === 0 ? (
         q || clientId ? (
@@ -99,7 +104,12 @@ export default function PagesScreen() {
             icon={<PagesIcon />}
             title="No pages yet"
             description="Add a client and we'll crawl its blog pages. They'll show up here."
-            action={<Link to="/clients">Add a client</Link>}
+            action={
+              <Link to="/clients">
+                <PlusIcon size={16} />
+                Add a client
+              </Link>
+            }
           />
         )
       ) : (

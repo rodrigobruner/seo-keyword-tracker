@@ -8,9 +8,18 @@ export function readToken(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-const SERIES_TOKENS = ['--chart-1', '--chart-2', '--chart-3', '--chart-4', '--chart-5', '--chart-6'];
+const SERIES_TOKENS = [
+  '--chart-1',
+  '--chart-2',
+  '--chart-3',
+  '--chart-4',
+  '--chart-5',
+  '--chart-6',
+  '--chart-7',
+  '--chart-8',
+];
 
-/** Stable per-series colour: keyword index → brand chart colour (cycles). */
+/** Stable per-series colour: keyword index → categorical chart colour (cycles). */
 export function seriesColor(index: number): string {
   const token = SERIES_TOKENS[index % SERIES_TOKENS.length] ?? '--chart-1';
   return readToken(token) || '#6161ff';

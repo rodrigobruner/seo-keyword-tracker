@@ -83,6 +83,9 @@
 
 .logout {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--color-sidebar-text);

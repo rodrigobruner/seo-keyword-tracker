@@ -16,7 +16,7 @@ import { formatDateShort, formatDateLong, torontoYmd, torontoMidnightUtcIso } fr
 import { readToken, seriesColor } from '../lib/theme';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { EmptyState } from '../components/EmptyState';
-import { ChartIcon, CheckIcon } from '../components/icons';
+import { AlertIcon, ChartIcon, CheckIcon } from '../components/icons';
 import styles from './PageDetail.module.css';
 
 const MAX_SERIES = 8; // keep the chart/table legible
@@ -42,6 +42,7 @@ export default function PageDetail() {
   const id = Number(rawId);
   const [view, setView] = useState<View>('chart');
   const [showAllKeywords, setShowAllKeywords] = useState(false);
+  const [showAllSeries, setShowAllSeries] = useState(false);
   const [range, setRange] = useState<RangeKey>('90d');
   const today = torontoYmd();
   const [customFrom, setCustomFrom] = useState(() => torontoYmd(new Date(Date.now() - 90 * DAY_MS)));
@@ -73,14 +74,19 @@ export default function PageDetail() {
     enabled: Number.isInteger(id) && id > 0 && customValid,
   });
 
-  const series = (snapshots.data?.series ?? []).slice(0, MAX_SERIES);
+  const allSeries = snapshots.data?.series ?? [];
+  const chartSeries = allSeries.slice(0, MAX_SERIES); // chart stays readable (top N)
+  const tableSeries = showAllSeries ? allSeries : allSeries.slice(0, MAX_SERIES);
 
   if (detail.isLoading) return <div className={styles.state}>Loading…</div>;
   if (detail.isError || !detail.data) {
     return (
-      <div className={styles.state}>
-        Page not found. <Link to="/pages">Back to pages</Link>
-      </div>
+      <EmptyState
+        icon={<AlertIcon />}
+        title="Page not found"
+        description="This page doesn't exist, or it isn't in your account."
+        action={<Link to="/pages">Back to pages</Link>}
+      />
     );
   }
 
@@ -209,16 +215,31 @@ export default function PageDetail() {
           <p className={styles.empty}>Pick a start and end date (start on or before end).</p>
         ) : snapshots.isLoading ? (
           <div className={styles.state}>Loading history…</div>
-        ) : series.length === 0 ? (
+        ) : allSeries.length === 0 ? (
           <EmptyState
             icon={<ChartIcon />}
             title="No rank history"
             description="No snapshots for this page in the selected range. Try a wider range."
           />
         ) : view === 'chart' ? (
-          <RankChart series={series} />
+          <>
+            <RankChart series={chartSeries} />
+            {allSeries.length > MAX_SERIES && (
+              <p className={styles.chartNote}>
+                Showing the top {MAX_SERIES} keywords. Switch to Table to see all{' '}
+                {allSeries.length}.
+              </p>
+            )}
+          </>
         ) : (
-          <RankTable series={series} />
+          <>
+            <RankTable series={tableSeries} />
+            {allSeries.length > MAX_SERIES && (
+              <button className={styles.showMore} onClick={() => setShowAllSeries((v) => !v)}>
+                {showAllSeries ? `Show top ${MAX_SERIES}` : `Show all ${allSeries.length} keywords`}
+              </button>
+            )}
+          </>
         )}
       </section>
     </div>

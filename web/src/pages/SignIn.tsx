@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { ApiError } from '../lib/api';
+import { LoginIcon } from '../components/icons';
 import styles from './SignIn.module.css';
 
 export default function SignIn() {
@@ -58,6 +59,7 @@ export default function SignIn() {
         {error && <div className={styles.error}>{error}</div>}
 
         <button className={styles.submit} type="submit" disabled={submitting}>
+          <LoginIcon size={18} />
           {submitting ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
