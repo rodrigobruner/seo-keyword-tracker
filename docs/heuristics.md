@@ -29,7 +29,7 @@ The first plan was naive: extract fixed uni-/bigrams weighted by where they appe
 2. **RAKE candidates:** split each zone's text on stopwords (English list) and punctuation → candidate phrases; drop tokens `< 3` chars and number-only tokens.
 3. **Score** = Σ over zones of `zone_weight × RAKE_phrase_score` (RAKE word score = `degree / frequency`, summed per phrase).
 4. *(Optional, time-permitting)* multiply by **IDF** computed across the 15 crawled pages — downranks terms common to the whole site. This is the only step that couples pages (two-phase pass), so it's opt-in.
-5. Keep candidates with **score ≥ 2** (a lone body mention doesn't qualify); take the **top 8**; store `relevance = score / top_score` (normalized **0..1**).
+5. Keep candidates with **score ≥ 2** (a lone body mention doesn't qualify); take the **top 15** (the page-detail view shows the first 8 with a "show all"); store `relevance = score / top_score` (normalized **0..1**).
 
 **Scope:** English (English stopword list). Other languages would need their own stopwords — out of scope, documented.
 

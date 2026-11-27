@@ -20,6 +20,7 @@ import { ChartIcon } from '../components/icons';
 import styles from './PageDetail.module.css';
 
 const MAX_SERIES = 8; // keep the chart/table legible
+const KEYWORDS_PREVIEW = 8; // show this many before "Show all"
 const SEVERITY_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
 const DAY_MS = 86_400_000;
 
@@ -40,6 +41,7 @@ export default function PageDetail() {
   const { id: rawId } = useParams();
   const id = Number(rawId);
   const [view, setView] = useState<View>('chart');
+  const [showAllKeywords, setShowAllKeywords] = useState(false);
   const [range, setRange] = useState<RangeKey>('90d');
   const today = torontoYmd();
   const [customFrom, setCustomFrom] = useState(() => torontoYmd(new Date(Date.now() - 90 * DAY_MS)));
@@ -110,14 +112,23 @@ export default function PageDetail() {
           {page.keywords.length === 0 ? (
             <p className={styles.empty}>No keywords extracted.</p>
           ) : (
-            <ul className={styles.keywords}>
-              {page.keywords.map((k) => (
-                <li key={k.text} className={styles.keyword}>
-                  <span>{k.text}</span>
-                  <span className={styles.relevance}>{k.relevance.toFixed(2)}</span>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className={styles.keywords}>
+                {(showAllKeywords ? page.keywords : page.keywords.slice(0, KEYWORDS_PREVIEW)).map(
+                  (k) => (
+                    <li key={k.text} className={styles.keyword}>
+                      <span>{k.text}</span>
+                      <span className={styles.relevance}>{k.relevance.toFixed(2)}</span>
+                    </li>
+                  ),
+                )}
+              </ul>
+              {page.keywords.length > KEYWORDS_PREVIEW && (
+                <button className={styles.showMore} onClick={() => setShowAllKeywords((v) => !v)}>
+                  {showAllKeywords ? 'Show less' : `Show all ${page.keywords.length}`}
+                </button>
+              )}
+            </>
           )}
         </section>
 

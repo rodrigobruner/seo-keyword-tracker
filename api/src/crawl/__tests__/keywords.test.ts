@@ -60,7 +60,7 @@ describe('extractKeywords', () => {
 
   it('caps the result at topN', () => {
     const words = Array.from({ length: 12 }, (_, i) => `termword${String.fromCharCode(97 + i)}`);
-    const kws = extractKeywords(makeContent({ title: words.join(' and ') }));
-    expect(kws).toHaveLength(8);
+    const kws = extractKeywords(makeContent({ title: words.join(' and ') }), { topN: 5 });
+    expect(kws).toHaveLength(5);
   });
 });
