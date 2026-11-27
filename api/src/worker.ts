@@ -15,7 +15,11 @@ installProcessSafetyNets('worker');
 
 const POLL_INTERVAL_MS = 1000;
 const IDLE_DELAY_MS = 1000;
-const VISIBILITY_TIMEOUT_MS = 5 * 60_000;
+// Must exceed the worst-case crawl wall-time, or a still-running job gets reaped
+// and double-crawled: up to 25 sitemap fetches + 15 page fetches at 10s each
+// ≈ 6.7min. 10min leaves margin. (Parallelizing fetches — see scaling.md — would
+// let this drop; recovery latency for a genuinely dead worker is the trade-off.)
+const VISIBILITY_TIMEOUT_MS = 10 * 60_000;
 const REAP_EVERY_MS = 60_000;
 
 const workerId = `worker-${process.pid}`;
