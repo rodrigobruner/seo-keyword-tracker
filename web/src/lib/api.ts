@@ -96,8 +96,6 @@ export interface PagesQuery {
   q?: string;
   page?: number;
   pageSize?: number;
-  sort?: 'url' | 'position' | 'issues';
-  dir?: 'asc' | 'desc';
 }
 
 function toQuery(params: Record<string, string | number | undefined>): string {

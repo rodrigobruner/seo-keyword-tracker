@@ -48,8 +48,11 @@
   --color-sidebar-active: var(--grey-0);
   --color-sidebar-accent: var(--ps-secondary); /* on-dark CTA/active = lime */
   --color-sidebar-accent-text: var(--grey-950);
+  --color-sidebar-hover: rgba(255, 255, 255, 0.08); /* on-dark hover surface */
+  --color-sidebar-border: rgba(255, 255, 255, 0.12); /* on-dark hairline */
   --color-accent: var(--ps-primary); /* accent on LIGHT surfaces */
   --color-accent-hover: var(--ps-primary-600);
+  --color-on-accent: var(--grey-0); /* text/icon on an accent-filled button */
   --color-link: var(--ps-primary);
   --color-focus-ring: color-mix(in srgb, var(--ps-primary) 40%, transparent);
   --sev-high: var(--ps-error);
@@ -85,7 +88,6 @@
   --text-xl: 28px;
   --leading-tight: 1.25;
   --leading-normal: 1.5;
-  --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
@@ -99,23 +101,17 @@
   --space-32: 32px;
   --space-40: 40px;
   --space-48: 48px;
-  --space-64: 64px;
 
   /* ---- Radius ---- */
   --radius-sm: 8px;
   --radius-md: 16px;
-  --radius-lg: 24px;
   --radius-pill: 117px;
   --radius-input: 2px;
 
   /* ---- Elevation (brand cards are mostly flat; shadows kept subtle) ---- */
   --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
-  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.1);
 
   /* ---- Controls ---- */
-  --btn-radius: var(--radius-pill);
-  --btn-pad-y: 14px;
-  --btn-pad-x: 32px;
   --btn-weight: 600;
   --input-height: 48px;
   --input-pad: 12px;
@@ -123,22 +119,7 @@
 
   /* ---- Layout ---- */
   --sidebar-width: 240px;
-  --topbar-height: 64px;
-  --container-max: 1440px;
-  --container-pad: 64px;
 
   /* ---- Motion ---- */
   --transition-fast: 120ms ease;
-}
-
-/* Brand reduces container padding on smaller screens. Breakpoints: 1024 / 768 / 576. */
-@media (max-width: 1024px) {
-  :root {
-    --container-pad: 16px;
-  }
-}
-@media (max-width: 576px) {
-  :root {
-    --container-pad: 16px;
-  }
 }

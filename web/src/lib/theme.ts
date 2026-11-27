@@ -22,5 +22,5 @@ const SERIES_TOKENS = [
 /** Stable per-series colour: keyword index → categorical chart colour (cycles). */
 export function seriesColor(index: number): string {
   const token = SERIES_TOKENS[index % SERIES_TOKENS.length] ?? '--chart-1';
-  return readToken(token) || '#6161ff';
+  return readToken(token);
 }

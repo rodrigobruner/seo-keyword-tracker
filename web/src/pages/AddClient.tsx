@@ -201,7 +201,7 @@ function HowItWorks() {
       <h2 className={styles.cardTitle}>How it works</h2>
       <ol className={styles.steps}>
         {steps.map((text, i) => (
-          <li key={i}>
+          <li key={text}>
             <span className={styles.stepNum}>{i + 1}</span>
             <span>{text}</span>
           </li>
