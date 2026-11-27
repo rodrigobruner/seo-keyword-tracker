@@ -7,6 +7,7 @@ import { verifyPassword, DUMMY_HASH } from '../../auth/password';
 import { signSession } from '../../auth/jwt';
 import { setSessionCookie, clearSessionCookie } from '../../auth/cookie';
 import { requireAuth } from '../../middleware/auth';
+import { asyncHandler } from '../../middleware/async-handler';
 
 const LoginSchema = z.object({
   email: z.string().email(),
@@ -24,7 +25,7 @@ export function authRouter(pool: Pool): Router {
   const users = new UserRepository(pool);
   const router = Router();
 
-  router.post('/login', loginLimiter, async (req, res) => {
+  router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
     const parsed = LoginSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'invalid credentials' });
@@ -41,21 +42,21 @@ export function authRouter(pool: Pool): Router {
     }
     setSessionCookie(res, signSession(user.id));
     res.json({ id: user.id, email: user.email });
-  });
+  }));
 
   router.post('/logout', (_req, res) => {
     clearSessionCookie(res);
     res.json({ ok: true });
   });
 
-  router.get('/me', requireAuth, async (req, res) => {
+  router.get('/me', requireAuth, asyncHandler(async (req, res) => {
     const user = await users.findPublicById(req.userId!);
     if (!user) {
       res.status(401).json({ error: 'unauthorized' });
       return;
     }
     res.json(user);
-  });
+  }));
 
   return router;
 }

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth';
+import { asyncHandler } from '../../middleware/async-handler';
 import { ClientRepository } from '../../repositories/client-repository';
 import { PgCrawlJobRepository } from '../../repositories/crawl-job-repository';
 import { assertHttpUrl, SsrfError } from '../../crawl/http';
@@ -11,7 +12,7 @@ const CreateBody = z.object({
   websiteUrl: z.string().trim().min(1).max(2000),
 });
 
-function parseId(raw: string): number | null {
+function parseId(raw: string | undefined): number | null {
   const id = Number(raw);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
@@ -22,11 +23,11 @@ export function clientsRouter(pool: Pool): Router {
   const router = Router();
   router.use(requireAuth);
 
-  router.get('/', async (req, res) => {
+  router.get('/', asyncHandler(async (req, res) => {
     res.json({ items: await clients.listForUser(req.userId!) });
-  });
+  }));
 
-  router.get('/:id', async (req, res) => {
+  router.get('/:id', asyncHandler(async (req, res) => {
     const id = parseId(req.params.id);
     if (id === null) {
       res.status(400).json({ error: 'invalid id' });
@@ -38,9 +39,9 @@ export function clientsRouter(pool: Pool): Router {
       return;
     }
     res.json(client);
-  });
+  }));
 
-  router.post('/', async (req, res) => {
+  router.post('/', asyncHandler(async (req, res) => {
     const parsed = CreateBody.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'invalid input' });
@@ -62,7 +63,7 @@ export function clientsRouter(pool: Pool): Router {
     }
     await jobs.enqueue(result.id); // worker picks it up and crawls
     res.status(201).json(await clients.findByIdForUser(result.id, req.userId!));
-  });
+  }));
 
   return router;
 }
