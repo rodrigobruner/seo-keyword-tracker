@@ -26,8 +26,11 @@ const repo = new PgCrawlRepository(pool);
 const jobs = new PgCrawlJobRepository(pool);
 const fetchText = createFetchText();
 
+const SHUTDOWN_GRACE_MS = 5000; // let an in-flight job finish before closing the pool
+
 let running = true;
 let lastReapAt = 0;
+let currentWork: Promise<unknown> = Promise.resolve();
 
 async function processOne(): Promise<boolean> {
   const job = await jobs.claimNext(workerId);
@@ -56,12 +59,9 @@ async function main(): Promise<void> {
   console.log(`[worker] ${workerId} started (timezone ${env.APP_TIMEZONE})`);
   while (running) {
     await maybeReap(Date.now());
-    try {
-      await processOne();
-    } catch (err) {
-      console.error('[worker] loop error:', err);
-    }
-    await sleep(LOOP_DELAY_MS);
+    currentWork = processOne().catch((err) => console.error('[worker] loop error:', err));
+    await currentWork;
+    if (running) await sleep(LOOP_DELAY_MS);
   }
 }
 
@@ -71,7 +71,11 @@ function sleep(ms: number): Promise<void> {
 
 async function shutdown(): Promise<void> {
   running = false;
-  await closePool();
+  // Let the in-flight job finish (bounded) so we don't tear the pool down
+  // mid-write; anything still unfinished is recovered by the reaper.
+  const deadline = new Promise((resolve) => setTimeout(resolve, SHUTDOWN_GRACE_MS));
+  await Promise.race([currentWork, deadline]);
+  await closePool().catch(() => undefined);
   process.exit(0);
 }
 

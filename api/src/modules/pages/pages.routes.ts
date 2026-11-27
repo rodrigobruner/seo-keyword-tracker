@@ -9,7 +9,7 @@ import { parseId } from '../../util/params';
 const ListQuery = z.object({
   clientId: z.coerce.number().int().positive().optional(),
   q: z.string().trim().min(1).max(200).optional(),
-  page: z.coerce.number().int().min(1).default(1),
+  page: z.coerce.number().int().min(1).max(100_000).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   sort: z.enum(['url', 'position', 'issues']).optional(),
   dir: z.enum(['asc', 'desc']).optional(),

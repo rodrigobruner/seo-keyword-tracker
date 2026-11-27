@@ -82,7 +82,9 @@ export class PageRepository {
    *  page's best current rank position (lowest across its keywords, latest date). */
   async listForUser(userId: number, opts: ListOptions): Promise<PageListResult> {
     const clientId = opts.clientId ?? null;
-    const search = opts.q ? `%${opts.q}%` : null;
+    // Escape LIKE metacharacters so a literal "%" or "_" in the query matches
+    // literally (default backslash escape) rather than acting as a wildcard.
+    const search = opts.q ? `%${opts.q.replace(/[\\%_]/g, '\\$&')}%` : null;
     const orderBy = buildPageOrderBy(opts.sort, opts.dir);
 
     const items = await this.pool.query<ListRow>(

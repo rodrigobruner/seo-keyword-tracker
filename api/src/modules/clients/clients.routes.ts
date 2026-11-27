@@ -5,7 +5,6 @@ import type { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/async-handler';
 import { ClientRepository } from '../../repositories/client-repository';
-import { PgCrawlJobRepository } from '../../repositories/crawl-job-repository';
 import { assertHttpUrl, SsrfError } from '../../crawl/http';
 import { parseId } from '../../util/params';
 
@@ -29,7 +28,6 @@ const createClientLimiter = rateLimit({
 
 export function clientsRouter(pool: Pool): Router {
   const clients = new ClientRepository(pool);
-  const jobs = new PgCrawlJobRepository(pool);
   const router = Router();
   router.use(requireAuth);
 
@@ -71,7 +69,7 @@ export function clientsRouter(pool: Pool): Router {
       res.status(409).json({ error: 'you already have a client for this website' });
       return;
     }
-    await jobs.enqueue(result.id); // worker picks it up and crawls
+    // create() enqueued the crawl job in the same transaction.
     res.status(201).json(await clients.findByIdForUser(result.id, req.userId!));
   }));
 

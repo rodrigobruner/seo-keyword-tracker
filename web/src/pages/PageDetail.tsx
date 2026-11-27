@@ -212,7 +212,9 @@ export default function PageDetail() {
           </div>
         )}
         {!customValid ? (
-          <p className={styles.empty}>Pick a start and end date (start on or before end).</p>
+          <p className={styles.empty} role="alert">
+            Pick a start and end date (start on or before end).
+          </p>
         ) : snapshots.isLoading ? (
           <div className={styles.state}>Loading history…</div>
         ) : allSeries.length === 0 ? (

@@ -64,24 +64,34 @@ export class ClientRepository {
     return row ? mapClient(row) : null;
   }
 
-  /** Create a client, or 'duplicate' if the user already has this host. */
+  /** Create a client AND enqueue its crawl job in one transaction, so a client is
+   *  never left persisted without a job (which would hang forever in PENDING).
+   *  Returns 'duplicate' if the user already has this host. */
   async create(
     userId: number,
     name: string,
     websiteUrl: string,
     host: string,
   ): Promise<{ id: number } | 'duplicate'> {
+    const db = await this.pool.connect();
     try {
-      const res = await this.pool.query<{ id: number }>(
+      await db.query('BEGIN');
+      const res = await db.query<{ id: number }>(
         `INSERT INTO clients (user_id, name, website_url, host) VALUES ($1, $2, $3, $4) RETURNING id`,
         [userId, name, websiteUrl, host],
       );
-      return { id: res.rows[0]!.id };
+      const id = res.rows[0]!.id;
+      await db.query(`INSERT INTO crawl_jobs (client_id) VALUES ($1)`, [id]);
+      await db.query('COMMIT');
+      return { id };
     } catch (err) {
+      await db.query('ROLLBACK').catch(() => undefined);
       if (err && typeof err === 'object' && 'code' in err && err.code === '23505') {
         return 'duplicate'; // unique (user_id, host)
       }
       throw err;
+    } finally {
+      db.release();
     }
   }
 

@@ -88,6 +88,10 @@ describe.skipIf(!RUN)('API endpoints integration', () => {
     const byTitle = await agentA.get('/pages?q=Link%20Building').expect(200);
     expect(byTitle.body.items.map((p: ListItem) => p.id)).toEqual([id.pageA2]);
 
+    // LIKE wildcards are escaped: a literal "%" matches nothing, not everything
+    const wild = await agentA.get('/pages?q=%25').expect(200);
+    expect(wild.body.total).toBe(0);
+
     const otherClient = await agentA.get(`/pages?clientId=${id.clientB}`).expect(200);
     expect(otherClient.body.total).toBe(0);
 
