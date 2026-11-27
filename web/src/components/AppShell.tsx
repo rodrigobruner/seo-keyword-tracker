@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import styles from './AppShell.module.css';
 
@@ -10,10 +10,10 @@ export function AppShell() {
   return (
     <div className={styles.shell}>
       <aside className={styles.sidebar}>
-        <div className={styles.brand}>
+        <Link to="/pages" className={styles.brand}>
           <img src="/logo.svg" alt="" className={styles.brandLogo} />
           <span>SEO Tracker</span>
-        </div>
+        </Link>
         <nav className={styles.nav}>
           <NavLink to="/pages" className={navItemClass}>
             Pages
