@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth';
+import { asyncHandler } from '../../middleware/async-handler';
 import { PageRepository } from '../../repositories/page-repository';
 
 const ListQuery = z.object({
@@ -24,7 +25,7 @@ function resolveRange(from?: string, to?: string): { fromUtc: Date; toUtc: Date 
   return { fromUtc, toUtc };
 }
 
-function parseId(raw: string): number | null {
+function parseId(raw: string | undefined): number | null {
   const id = Number(raw);
   return Number.isInteger(id) && id > 0 ? id : null;
 }
@@ -34,7 +35,7 @@ export function pagesRouter(pool: Pool): Router {
   const router = Router();
   router.use(requireAuth);
 
-  router.get('/', async (req, res) => {
+  router.get('/', asyncHandler(async (req, res) => {
     const parsed = ListQuery.safeParse(req.query);
     if (!parsed.success) {
       res.status(400).json({ error: 'invalid query' });
@@ -50,9 +51,9 @@ export function pagesRouter(pool: Pool): Router {
       dir,
     });
     res.json({ items: result.items, total: result.total, page, pageSize });
-  });
+  }));
 
-  router.get('/:id', async (req, res) => {
+  router.get('/:id', asyncHandler(async (req, res) => {
     const id = parseId(req.params.id);
     if (id === null) {
       res.status(400).json({ error: 'invalid id' });
@@ -64,9 +65,9 @@ export function pagesRouter(pool: Pool): Router {
       return;
     }
     res.json(detail);
-  });
+  }));
 
-  router.get('/:id/snapshots', async (req, res) => {
+  router.get('/:id/snapshots', asyncHandler(async (req, res) => {
     const id = parseId(req.params.id);
     if (id === null) {
       res.status(400).json({ error: 'invalid id' });
@@ -84,7 +85,7 @@ export function pagesRouter(pool: Pool): Router {
       return;
     }
     res.json({ series });
-  });
+  }));
 
   return router;
 }
