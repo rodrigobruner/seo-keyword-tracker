@@ -84,6 +84,10 @@ describe.skipIf(!RUN)('API endpoints integration', () => {
     const search = await agentA.get('/pages?q=link').expect(200);
     expect(search.body.items.map((p: ListItem) => p.url)).toEqual(['https://alpha.test/link-building']);
 
+    // title-only match: the space won't match the hyphenated URL, and pageA2 has no keywords
+    const byTitle = await agentA.get('/pages?q=Link%20Building').expect(200);
+    expect(byTitle.body.items.map((p: ListItem) => p.id)).toEqual([id.pageA2]);
+
     const otherClient = await agentA.get(`/pages?clientId=${id.clientB}`).expect(200);
     expect(otherClient.body.total).toBe(0);
 

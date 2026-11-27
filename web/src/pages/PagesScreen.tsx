@@ -59,7 +59,7 @@ export default function PagesScreen() {
         <div className={styles.filters}>
           <input
             className={styles.search}
-            placeholder="Search URL or keyword…"
+            placeholder="Search by title, URL or keyword…"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
