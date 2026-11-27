@@ -16,7 +16,7 @@ import { formatDateShort, formatDateLong, torontoYmd, torontoMidnightUtcIso } fr
 import { readToken, seriesColor } from '../lib/theme';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { EmptyState } from '../components/EmptyState';
-import { ChartIcon, CheckIcon } from '../components/icons';
+import { AlertIcon, ChartIcon, CheckIcon } from '../components/icons';
 import styles from './PageDetail.module.css';
 
 const MAX_SERIES = 8; // keep the chart/table legible
@@ -81,9 +81,12 @@ export default function PageDetail() {
   if (detail.isLoading) return <div className={styles.state}>Loading…</div>;
   if (detail.isError || !detail.data) {
     return (
-      <div className={styles.state}>
-        Page not found. <Link to="/pages">Back to pages</Link>
-      </div>
+      <EmptyState
+        icon={<AlertIcon />}
+        title="Page not found"
+        description="This page doesn't exist, or it isn't in your account."
+        action={<Link to="/pages">Back to pages</Link>}
+      />
     );
   }
 
