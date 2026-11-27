@@ -177,14 +177,14 @@ A unit test proves User A cannot reach User B's page by changing the id in the U
 5. Nothing found → `NoSitemapError` → `Client.crawl_status = FAILED` (covers "not every site has a sitemap where you expect").
 
 **Fetch + extraction (`fetchPage.ts`/`keywords.ts`/`issues.ts`):** native `fetch` (UA, timeout), concurrency ~3 + small delay (politeness). cheerio for parsing.
-- **Keywords (documented heuristic):** RAKE-style candidate phrases per zone + SEO zone-weighting (title 5, h1 4, meta 3, h2/h3 & slug 2, body 1); keep score ≥ 2; top 8; `relevance` normalized 0..1. Optional corpus TF-IDF across the 15 pages (time-permitting). Full spec + sources in `docs/heuristics.md`.
+- **Keywords (documented heuristic):** RAKE-style candidate phrases per zone + SEO zone-weighting (title 5, h1 4, meta 3, h2/h3 & slug 2, body 1); keep score ≥ 2; top 15; `relevance` normalized 0..1. Optional corpus TF-IDF across the 15 pages (time-permitting). Full spec + sources in `docs/heuristics.md`.
 - **Issues (documented checks):** thresholds aligned to Lighthouse/Yoast — title missing/<30/>60; meta missing/<120/>160; single H1; images missing alt (count); thin < 300 words; canonical; viewport; `NOINDEX` (HIGH); `NON_DESCRIPTIVE_LINKS` (LOW); optional `KEYWORD_STUFFING`. Each → `{code, severity, message}`. See `docs/heuristics.md`.
 
 ---
 
 ## Scale (≥50k snapshots, responsive) + timezone
 
-- 2 users × 1 client × 15 pages = 30 pages; ~8 keywords/page ⇒ ~240 pairs. Seed generates **one per pair per day** over `ceil(50000/pairs)+margin` (~**400 days**) → guarantees ≥50k rows regardless of the pair count. Bulk insert via **`COPY`** (`pg-copy-streams`) or multi-row `INSERT` in ~5k batches. **Seedable** RNG (random walk 1..100, small daily deltas) → reproducible and realistic charts.
+- 2 users × 1 client × 15 pages = 30 pages; ~8 keywords/page ⇒ ~240 pairs. Seed generates **one per pair per day** over `ceil(50000/pairs)+margin` (~**400 days**) → guarantees ≥50k rows regardless of the pair count. Bulk insert via batched multi-row `unnest` inserts (~10k rows/batch). **Seedable** RNG (random walk 1..100, small daily deltas) → reproducible and realistic charts.
 - **Latest position (hot path, list):** SQL with `DISTINCT ON (page_id, keyword_id) … ORDER BY page_id, keyword_id, captured_at DESC` to get each pair's latest, inside a CTE, then aggregate per page to the **best (lowest) position on the most recent date**. Fast on the `(page_id, keyword_id, captured_at DESC)` index; `EXPLAIN ANALYZE` documented in the README (note: materialized `rank_latest` if it grows a lot).
 - **Timezone:** `captured_at` in **UTC** (timestamptz). Display converted to **America/Toronto** (client, `Intl` with `timeZone`); date filter converts the picked Toronto dates to UTC bounds (server, `AT TIME ZONE`). Both read the **same configured zone** (a single env constant, default `America/Toronto`) — server stays otherwise pure-UTC. Convention explained in the README.
 
@@ -199,7 +199,7 @@ A unit test proves User A cannot reach User B's page by changing the id in the U
 ## Auth / seed / CI / git
 
 - **Auth:** bcrypt for hashing; JWT in httpOnly cookie; CORS with credentials only in prod (dev uses the Vite proxy, same-origin).
-- **Seed (`seed/seed.ts`, committed, idempotent):** upsert 2 users (creds in README) + 2 clients (semrush, yoast), runs **the same** crawl routine, generates the snapshots (≥50k) via `COPY`. **Resilient to live sites:** timeouts + retries + realistic UA, and committed **fallback fixtures** (cached sitemap/HTML) so it never hard-fails if semrush/yoast is slow, changed, or blocks us.
+- **Seed (`seed/seed.ts`, committed, idempotent):** upsert 2 users (creds in README) + 2 clients (semrush, yoast), runs **the same** crawl routine, generates the snapshots (≥50k) via batched `unnest` inserts. **Resilient to live sites:** timeouts + retries + realistic UA, and committed **fallback fixtures** (cached sitemap/HTML) so it never hard-fails if semrush/yoast is slow, changed, or blocks us.
 - **CI (`.github/workflows/ci.yml`):** install → eslint → tsc → vitest on PR/push to `develop`.
 - **Git:** `main` + `develop` + `feature/*`; incremental PRs; `.env.example` with no secrets.
 

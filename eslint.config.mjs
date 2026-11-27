@@ -15,4 +15,11 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
+  {
+    // Node bootstrap scripts (plain JS): give them the Node globals they use.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { console: 'readonly', process: 'readonly', setTimeout: 'readonly' },
+    },
+  },
 );
