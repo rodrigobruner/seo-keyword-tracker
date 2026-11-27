@@ -194,8 +194,10 @@
 
 .customRange {
   display: flex;
+  justify-content: flex-end; /* line up under the controls on the right, not the title */
   gap: var(--space-16);
   flex-wrap: wrap;
+  margin-top: var(--space-12);
   margin-bottom: var(--space-4);
 }
 
