@@ -16,7 +16,7 @@ import { formatDateShort, formatDateLong, torontoYmd, torontoMidnightUtcIso } fr
 import { readToken, seriesColor } from '../lib/theme';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { EmptyState } from '../components/EmptyState';
-import { ChartIcon } from '../components/icons';
+import { ChartIcon, CheckIcon } from '../components/icons';
 import styles from './PageDetail.module.css';
 
 const MAX_SERIES = 8; // keep the chart/table legible
@@ -137,7 +137,12 @@ export default function PageDetail() {
             SEO issues {page.issues.length > 0 && <span className={styles.count}>{page.issues.length}</span>}
           </h2>
           {sortedIssues.length === 0 ? (
-            <p className={styles.empty}>No issues detected. 🎉</p>
+            <EmptyState
+              tone="success"
+              icon={<CheckIcon />}
+              title="Great job!"
+              description="No SEO issues found on this page."
+            />
           ) : (
             <ul className={styles.issues}>
               {sortedIssues.map((issue) => (

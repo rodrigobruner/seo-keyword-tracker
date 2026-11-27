@@ -13,6 +13,10 @@
   margin-bottom: var(--space-4);
 }
 
+.iconSuccess {
+  color: var(--sev-ok);
+}
+
 .icon svg {
   display: block;
 }
