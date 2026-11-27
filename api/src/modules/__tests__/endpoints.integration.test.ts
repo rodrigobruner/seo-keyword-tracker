@@ -131,4 +131,20 @@ describe.skipIf(!RUN)('API endpoints integration', () => {
     await agentA.post('/clients').send({ name: 'Dup', websiteUrl: 'https://new.test' }).expect(409);
     await request(app).get('/clients').expect(401);
   });
+
+  // Keep last: deleting clientA cascades its pages/snapshots.
+  it('clients: delete is tenancy-scoped (404 for others) and cascades', async () => {
+    await request(app).delete(`/clients/${id.clientA}`).expect(401); // no auth
+    await agentA.delete(`/clients/${id.clientB}`).expect(404); // not A's → 404 (no leak)
+    expect((await agentB.get(`/clients/${id.clientB}`).expect(200)).body.id).toBe(id.clientB); // untouched
+
+    await agentA.delete(`/clients/${id.clientA}`).expect(204); // own client → deleted
+    await agentA.get(`/clients/${id.clientA}`).expect(404);
+    await agentA.get(`/pages/${id.pageA}`).expect(404); // cascaded away
+    const snaps = await pool.query<{ n: number }>(
+      'SELECT count(*)::int AS n FROM rank_snapshots WHERE page_id = $1',
+      [id.pageA],
+    );
+    expect(snaps.rows[0]!.n).toBe(0); // cascade reached rank_snapshots
+  });
 });

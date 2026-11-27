@@ -36,6 +36,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 const get = <T>(path: string): Promise<T> => request<T>(path);
 const post = <T>(path: string, body?: unknown): Promise<T> =>
   request<T>(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) });
+const del = (path: string): Promise<void> => request<void>(path, { method: 'DELETE' });
 
 // ---- Domain types (mirror the API responses) ----
 
@@ -119,6 +120,7 @@ export const clientsApi = {
   get: (id: number) => get<ClientSummary>(`/clients/${id}`),
   create: (name: string, websiteUrl: string) =>
     post<ClientSummary>('/clients', { name, websiteUrl }),
+  remove: (id: number) => del(`/clients/${id}`),
 };
 
 export const pagesApi = {

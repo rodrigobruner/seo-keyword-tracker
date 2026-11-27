@@ -15,7 +15,8 @@ export default function App() {
           <Route path="/" element={<Navigate to="/pages" replace />} />
           <Route path="/pages" element={<PagesScreen />} />
           <Route path="/pages/:id" element={<PageDetail />} />
-          <Route path="/clients/new" element={<AddClient />} />
+          <Route path="/clients" element={<AddClient />} />
+          <Route path="/clients/new" element={<Navigate to="/clients" replace />} />
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/pages" replace />} />

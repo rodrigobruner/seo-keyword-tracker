@@ -15,8 +15,8 @@ export function AppShell() {
           <NavLink to="/pages" className={navItemClass}>
             Pages
           </NavLink>
-          <NavLink to="/clients/new" className={navItemClass}>
-            Add client
+          <NavLink to="/clients" className={navItemClass}>
+            Clients
           </NavLink>
         </nav>
         <div className={styles.footer}>

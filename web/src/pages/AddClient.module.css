@@ -264,3 +264,120 @@
     opacity: 1;
   }
 }
+
+/* ---- Your clients list ---- */
+.listCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.clientList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.clientRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  padding: var(--space-12) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.clientRow:last-child {
+  border-bottom: none;
+}
+
+.clientMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.clientName {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+}
+
+.clientHost {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.clientPages {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.viewLink {
+  font-size: var(--text-sm);
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.viewLink:hover {
+  text-decoration: underline;
+}
+
+.deleteBtn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--sev-high);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-12);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.deleteBtn:hover {
+  background: color-mix(in srgb, var(--sev-high) 8%, transparent);
+}
+
+.confirm {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.confirmYes {
+  background: var(--sev-high);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-12);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.confirmYes:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.confirmNo {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-12);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+@media (max-width: 576px) {
+  .clientRow {
+    flex-wrap: wrap;
+    gap: var(--space-8);
+  }
+}
