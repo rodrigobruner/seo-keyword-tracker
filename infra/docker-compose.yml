@@ -1,0 +1,110 @@
+# Full-stack local run: database + API + crawl worker + web (nginx).
+#
+# Two ways to use it:
+#   - Postgres only (for `npm run dev` on the host):
+#       docker compose -f infra/docker-compose.yml up -d db
+#   - Everything in Docker:
+#       docker compose -f infra/docker-compose.yml up --build
+#       docker compose -f infra/docker-compose.yml --profile seed run --rm seed  # optional demo data
+#       open http://localhost:8080
+#
+# The app env below uses dev-only defaults (same spirit as .env.example);
+# override any of them via your shell environment. Never use these in production.
+
+name: seo-keyword-tracker
+
+# Shared build context: api, worker, migrate and seed are one image, four roles.
+x-api-build: &api-build
+  context: ..
+  dockerfile: infra/api.Dockerfile
+
+x-app-env: &app-env
+  NODE_ENV: production
+  DATABASE_URL: postgres://app:app@db:5432/seo_tracker
+  SESSION_SECRET: ${SESSION_SECRET:-dev_local_only_4f8c2a7b1e9d3056_change_in_prod}
+  APP_TIMEZONE: ${APP_TIMEZONE:-America/Toronto}
+  WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:8080}
+
+services:
+  db:
+    image: postgres:16
+    container_name: seo-tracker-db
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: seo_tracker
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U app -d seo_tracker']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-off: apply migrations, then exit. api/worker wait for it to finish.
+  migrate:
+    build: *api-build
+    image: seo-tracker-api:local
+    command: ['node', 'api/dist/db/migrate.js']
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build: *api-build
+    image: seo-tracker-api:local
+    command: ['node', 'api/dist/src/index.js']
+    environment: *app-env
+    ports:
+      - '4000:4000'
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    build: *api-build
+    image: seo-tracker-api:local
+    command: ['node', 'api/dist/src/worker.js']
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/web.Dockerfile
+    image: seo-tracker-web:local
+    ports:
+      - '8080:80'
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # Optional one-off: crawl the seed sites + generate >=50k snapshots.
+  #   docker compose -f infra/docker-compose.yml --profile seed run --rm seed
+  seed:
+    build: *api-build
+    image: seo-tracker-api:local
+    command: ['node', 'api/dist/src/seed/seed.js']
+    environment:
+      <<: *app-env
+      SEED_PASSWORD: ${SEED_PASSWORD:-demo-docker}
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ['seed']
+    restart: 'no'
+
+volumes:
+  pgdata:

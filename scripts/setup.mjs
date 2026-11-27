@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ENV_PATH = join(ROOT, '.env');
-const DOCKER_DB_URL = 'postgres://app:app@localhost:5432/seo_tracker'; // matches docker-compose.yml
+const DOCKER_DB_URL = 'postgres://app:app@localhost:5432/seo_tracker'; // matches infra/docker-compose.yml
 
 // Buffer input lines in a queue so answers are never lost in the async gaps
 // between prompts (robust for both interactive typing and piped stdin).
@@ -135,8 +135,8 @@ async function main() {
       if (!hasCommand('docker')) {
         die('Docker not found. Install Docker, or re-run and choose the Local option.');
       }
-      console.log('\nStarting Postgres (docker compose up -d db)…');
-      run('docker', ['compose', 'up', '-d', 'db']);
+      console.log('\nStarting Postgres (docker compose -f infra/docker-compose.yml up -d db)…');
+      run('docker', ['compose', '-f', 'infra/docker-compose.yml', 'up', '-d', 'db']);
       databaseUrl = DOCKER_DB_URL;
     }
 
