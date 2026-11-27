@@ -13,8 +13,7 @@ installProcessSafetyNets('worker');
 // runs crawlClient for each. A reaper requeues jobs stuck past the visibility
 // timeout (crash recovery).
 
-const POLL_INTERVAL_MS = 1000;
-const IDLE_DELAY_MS = 1000;
+const LOOP_DELAY_MS = 1000; // pause between drain-loop iterations (busy or idle)
 // Must exceed the worst-case crawl wall-time, or a still-running job gets reaped
 // and double-crawled: up to 25 sitemap fetches + 15 page fetches at 10s each
 // ≈ 6.7min. 10min leaves margin. (Parallelizing fetches — see scaling.md — would
@@ -57,14 +56,12 @@ async function main(): Promise<void> {
   console.log(`[worker] ${workerId} started (timezone ${env.APP_TIMEZONE})`);
   while (running) {
     await maybeReap(Date.now());
-    let worked = false;
     try {
-      worked = await processOne();
+      await processOne();
     } catch (err) {
       console.error('[worker] loop error:', err);
     }
-    if (!worked) await sleep(IDLE_DELAY_MS);
-    else await sleep(POLL_INTERVAL_MS);
+    await sleep(LOOP_DELAY_MS);
   }
 }
 

@@ -8,8 +8,6 @@ export interface CrawlJob {
   id: number;
   clientId: number;
   websiteUrl: string;
-  attempts: number;
-  maxAttempts: number;
 }
 
 export interface CrawlJobRepository {
@@ -27,8 +25,6 @@ interface JobRow {
   id: number;
   client_id: number;
   website_url: string;
-  attempts: number;
-  max_attempts: number;
 }
 
 export class PgCrawlJobRepository implements CrawlJobRepository {
@@ -52,18 +48,12 @@ export class PgCrawlJobRepository implements CrawlJobRepository {
            locked_by = $1, started_at = COALESCE(j.started_at, now()), updated_at = now()
        FROM next JOIN clients c ON TRUE
        WHERE j.id = next.id AND c.id = j.client_id
-       RETURNING j.id, j.client_id, c.website_url, j.attempts, j.max_attempts`,
+       RETURNING j.id, j.client_id, c.website_url`,
       [workerId],
     );
     const row = res.rows[0];
     if (!row) return null;
-    return {
-      id: row.id,
-      clientId: row.client_id,
-      websiteUrl: row.website_url,
-      attempts: row.attempts,
-      maxAttempts: row.max_attempts,
-    };
+    return { id: row.id, clientId: row.client_id, websiteUrl: row.website_url };
   }
 
   async complete(jobId: number): Promise<void> {

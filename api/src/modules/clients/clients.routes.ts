@@ -7,6 +7,7 @@ import { asyncHandler } from '../../middleware/async-handler';
 import { ClientRepository } from '../../repositories/client-repository';
 import { PgCrawlJobRepository } from '../../repositories/crawl-job-repository';
 import { assertHttpUrl, SsrfError } from '../../crawl/http';
+import { parseId } from '../../util/params';
 
 const CreateBody = z.object({
   name: z.string().trim().min(1).max(200),
@@ -25,11 +26,6 @@ const createClientLimiter = rateLimit({
   keyGenerator: (req) => String(req.userId),
   message: { error: 'Too many new clients. Please wait a few minutes and try again.' },
 });
-
-function parseId(raw: string | undefined): number | null {
-  const id = Number(raw);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
 
 export function clientsRouter(pool: Pool): Router {
   const clients = new ClientRepository(pool);

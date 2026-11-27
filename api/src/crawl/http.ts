@@ -39,7 +39,7 @@ function ipv4ToInt(ip: string): number | null {
     if (v > 255) return null;
     n = ((n << 8) | v) >>> 0;
   }
-  return n >>> 0;
+  return n;
 }
 
 function inRange4(ip: number, base: string, bits: number): boolean {

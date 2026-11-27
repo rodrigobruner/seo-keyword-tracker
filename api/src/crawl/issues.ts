@@ -6,6 +6,9 @@ import type { PageContent } from './fetchPage';
 
 export type Severity = 'LOW' | 'MEDIUM' | 'HIGH';
 
+// Built once (the source is a frozen config array), not per page.
+const NON_DESCRIPTIVE_SET = new Set<string>(NON_DESCRIPTIVE_LINK_TEXTS);
+
 export interface SeoIssue {
   code: string;
   severity: Severity;
@@ -80,8 +83,9 @@ export function detectIssues(
   }
 
   // Link text
-  const blocklist = new Set<string>(NON_DESCRIPTIVE_LINK_TEXTS);
-  const nonDescriptive = content.links.filter((l) => blocklist.has(l.text.toLowerCase())).length;
+  const nonDescriptive = content.links.filter((l) =>
+    NON_DESCRIPTIVE_SET.has(l.text.toLowerCase()),
+  ).length;
   if (nonDescriptive > 0) {
     add(
       'NON_DESCRIPTIVE_LINKS',
