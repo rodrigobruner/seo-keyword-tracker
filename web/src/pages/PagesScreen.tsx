@@ -27,11 +27,15 @@ export default function PagesScreen() {
     [setSearchParams],
   );
 
-  // Debounce the search box into the URL.
+  // Debounce the search box into the URL. Only write when the term actually
+  // changed: mounting or paginating must not rewrite `q`, since updateParam clears
+  // the `page` param on any non-page change (which would snap back to page 1).
   useEffect(() => {
-    const t = setTimeout(() => updateParam('q', searchInput.trim()), 300);
+    const trimmed = searchInput.trim();
+    if (trimmed === q) return;
+    const t = setTimeout(() => updateParam('q', trimmed), 300);
     return () => clearTimeout(t);
-  }, [searchInput, updateParam]);
+  }, [searchInput, q, updateParam]);
 
   const clients = useQuery({ queryKey: ['clients'], queryFn: () => clientsApi.list() });
 
