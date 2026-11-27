@@ -20,8 +20,8 @@ const BATCH_ROWS = 10_000;
 // comes from SEED_PASSWORD (see .env.example) so it isn't hardcoded in source.
 const SEED_PASSWORD = process.env.SEED_PASSWORD;
 const ACCOUNTS = [
-  { email: 'alex@agency.test', client: 'Semrush', url: 'https://www.semrush.com' },
-  { email: 'sam@agency.test', client: 'Yoast', url: 'https://yoast.com' },
+  { email: 'demo@semrush.com', client: 'Semrush', url: 'https://www.semrush.com' },
+  { email: 'demo@yoast.com', client: 'Yoast', url: 'https://yoast.com' },
 ];
 
 /** Deterministic PRNG (mulberry32) → reproducible snapshots. */

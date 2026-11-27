@@ -38,8 +38,8 @@ npm run dev
 
 | Email | Client |
 |---|---|
-| `alex@agency.test` | Semrush (https://www.semrush.com) |
-| `sam@agency.test` | Yoast (https://yoast.com) |
+| `demo@semrush.com` | Semrush (https://www.semrush.com) |
+| `demo@yoast.com` | Yoast (https://yoast.com) |
 
 Validate the whole suite (lint + typecheck + tests) with `npm run check`.
 
