@@ -44,7 +44,7 @@ export class PgCrawlJobRepository implements CrawlJobRepository {
          LIMIT 1
        )
        UPDATE crawl_jobs j
-       SET status = 'RUNNING', attempts = attempts + 1, locked_at = now(),
+       SET status = 'RUNNING', locked_at = now(),
            locked_by = $1, started_at = COALESCE(j.started_at, now()), updated_at = now()
        FROM next JOIN clients c ON TRUE
        WHERE j.id = next.id AND c.id = j.client_id
@@ -64,13 +64,15 @@ export class PgCrawlJobRepository implements CrawlJobRepository {
   }
 
   async fail(jobId: number, error: string): Promise<void> {
-    // attempts was already incremented on claim; retry with exponential backoff
-    // while attempts remain, otherwise FAILED.
+    // Count the attempt here (on real failure), not on claim — so a worker
+    // crash/restart recovered by the reaper doesn't burn the retry budget.
+    // Requeue with exponential backoff while attempts remain, else FAILED.
     await this.pool.query(
       `UPDATE crawl_jobs
-       SET status = CASE WHEN attempts < max_attempts THEN 'QUEUED' ELSE 'FAILED' END,
+       SET attempts = attempts + 1,
+           status = CASE WHEN attempts + 1 < max_attempts THEN 'QUEUED' ELSE 'FAILED' END,
            last_error = $2,
-           run_after = now() + (interval '30 seconds' * attempts),
+           run_after = now() + (interval '30 seconds' * (attempts + 1)),
            updated_at = now()
        WHERE id = $1`,
       [jobId, error.slice(0, 500)],
