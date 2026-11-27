@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { pool, closePool } from '../db/pool';
 import { createFetchText } from '../crawl/http';
+import { withFixtureFallback } from './fixtures';
 import { crawlClient } from '../crawl/crawl-client';
 import { PgCrawlRepository } from '../repositories/crawl-repository';
 
@@ -45,7 +46,7 @@ async function seed(): Promise<void> {
   }
   const rng = mulberry32(RNG_SEED);
   const repo = new PgCrawlRepository(pool);
-  const fetchText = createFetchText();
+  const fetchText = withFixtureFallback(createFetchText());
 
   console.log('[seed] resetting data...');
   await pool.query('TRUNCATE users, keywords RESTART IDENTITY CASCADE');
