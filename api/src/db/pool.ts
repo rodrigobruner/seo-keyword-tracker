@@ -8,6 +8,13 @@ types.setTypeParser(20, (v) => (v === null ? null : Number.parseInt(v, 10)));
 // Single shared connection pool for the process (API or worker).
 export const pool = new Pool({ connectionString: env.DATABASE_URL });
 
+// A pooled client can error while idle (DB restart, network drop, idle-timeout
+// kill). Without a listener, pg emits this 'error' as an uncaught exception and
+// the process crashes. Log it and let the pool discard/replace the client.
+pool.on('error', (err) => {
+  console.error('[db] idle client error:', err.message);
+});
+
 export async function closePool(): Promise<void> {
   await pool.end();
 }

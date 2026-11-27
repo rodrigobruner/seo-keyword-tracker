@@ -4,6 +4,9 @@ import { createFetchText } from './crawl/http';
 import { crawlClient } from './crawl/crawl-client';
 import { PgCrawlRepository } from './repositories/crawl-repository';
 import { PgCrawlJobRepository } from './repositories/crawl-job-repository';
+import { installProcessSafetyNets } from './process-safety';
+
+installProcessSafetyNets('worker');
 
 // Crawl queue worker — a second entrypoint of the `api` workspace. Drains
 // crawl_jobs via SELECT ... FOR UPDATE SKIP LOCKED (so N replicas are safe) and
