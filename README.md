@@ -76,6 +76,13 @@ Per the brief, *"positions are invented… the pages and keywords are not invent
 
 Raw SQL (no ORM) to showcase schema + performance · single repo, two workspaces · worker + Postgres `SKIP LOCKED` queue for crawling · JWT-in-httpOnly-cookie auth · timezone fixed to America/Toronto (per the brief) · SEO thresholds aligned to Lighthouse/Yoast · console UI on a brand-aligned theme-token system. Every choice is sized to the challenge; the scale path for each is in [`docs/scaling.md`](docs/scaling.md). Full rationale in [`docs/decisions.md`](docs/decisions.md).
 
+## Unfinished / what's next
+
+- **Rank data is simulated** by design (the brief says positions are invented). In production the same `rank_snapshots` table would be filled from Google Search Console / a SERP API on a schedule — no schema change, just a new source.
+- **Column sorting** — the pages endpoint already supports `sort`/`dir` (with a safe allowlist), but the UI doesn't expose it yet; wiring clickable headers is the obvious next step.
+- **Frontend tests** — the backend has unit + DB-integration tests; the frontend has none by scope. A Vitest + Testing Library harness over the pages/add-client flows would be next.
+- The production evolution for every area (auth revocation/MFA, partitioning `rank_snapshots`, per-user timezone, a CSP on the SPA, per-user crawl quotas, …) is laid out in [`docs/scaling.md`](docs/scaling.md) — deliberately not built for this scope.
+
 ## AI tools
 
 Built with **Claude Code** (Claude Opus) — used throughout: architecture and planning, the documentation, the implementation, and two rounds of code review. Commits carry a `Co-Authored-By` trailer for transparency.
