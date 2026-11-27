@@ -55,3 +55,5 @@ The take-home already covers the OWASP basics (see `decisions.md` → "Security 
 - Production secrets → a managed **secret store** with rotation instead of a single `SESSION_SECRET` in `.env`.
 - Hardening pipeline → automated **dependency scanning + SAST/DAST** in CI, and a **WAF / managed rate-limiting** at the edge.
 - Frontend on a different origin than the API → explicit **CSRF tokens** (double-submit); today SameSite=Lax + same-origin suffices.
+- **Content-Security-Policy on the SPA** — `helmet` sets CSP on API responses, but the static web app has none. XSS risk is already low (React escapes everything, no `dangerouslySetInnerHTML`, external links use `rel="noopener noreferrer"`), so a strict CSP (plus `X-Content-Type-Options`, `Referrer-Policy`) served as headers from the web host would be defense-in-depth.
+- **Per-user quotas** — beyond the create rate-limit, cap total clients / concurrent crawl jobs per user (or per org) to bound abuse and cost.

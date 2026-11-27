@@ -136,6 +136,18 @@ describe.skipIf(!RUN)('API endpoints integration', () => {
     await request(app).get('/clients').expect(401);
   });
 
+  it('rate-limits client creation per user', async () => {
+    // userB has made no creates yet; every request counts toward the limit (10),
+    // so the 11th in the window is blocked. Duplicates are fine (only 1 insert).
+    for (let i = 0; i < 10; i++) {
+      await agentB.post('/clients').send({ name: 'RL', websiteUrl: 'https://rate-limit.test' });
+    }
+    await agentB
+      .post('/clients')
+      .send({ name: 'RL', websiteUrl: 'https://rate-limit.test' })
+      .expect(429);
+  });
+
   // Keep last: deleting clientA cascades its pages/snapshots.
   it('clients: delete is tenancy-scoped (404 for others) and cascades', async () => {
     await request(app).delete(`/clients/${id.clientA}`).expect(401); // no auth
