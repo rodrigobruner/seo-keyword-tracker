@@ -14,10 +14,19 @@
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
   font-family: var(--font-headings);
   font-weight: var(--weight-bold);
   font-size: var(--text-lg);
   color: var(--color-sidebar-active);
+}
+
+.brandLogo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .nav {
