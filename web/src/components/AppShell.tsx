@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { LogoutIcon } from './icons';
 import styles from './AppShell.module.css';
 
 const navItemClass = ({ isActive }: { isActive: boolean }) =>
@@ -27,6 +28,7 @@ export function AppShell() {
             {user?.email}
           </span>
           <button className={styles.logout} onClick={() => void logout()}>
+            <LogoutIcon size={14} />
             Sign out
           </button>
         </div>

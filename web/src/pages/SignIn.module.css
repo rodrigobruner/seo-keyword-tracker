@@ -69,6 +69,10 @@
 
 .submit {
   height: var(--input-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
   border: none;
   border-radius: var(--radius-pill);
   background: var(--color-accent);
