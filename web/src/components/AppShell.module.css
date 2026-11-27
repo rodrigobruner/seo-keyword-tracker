@@ -84,7 +84,7 @@
 
 .content {
   padding: var(--space-40);
-  max-width: var(--container-max);
+  min-width: 0; /* let the grid item shrink so wide tables/charts stay inside */
 }
 
 @media (max-width: 1024px) {
