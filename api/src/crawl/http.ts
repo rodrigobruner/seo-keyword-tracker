@@ -144,6 +144,7 @@ export interface FetchOptions {
   timeoutMs?: number;
   maxRedirects?: number;
   userAgent?: string;
+  maxRetries?: number;
 }
 
 function isAllowedContentType(ct: string): boolean {
@@ -223,25 +224,33 @@ export function createFetchText(options: FetchOptions = {}): FetchText {
     timeoutMs: options.timeoutMs ?? 10_000,
     maxRedirects: options.maxRedirects ?? 5,
     userAgent: options.userAgent ?? DEFAULT_UA,
+    maxRetries: options.maxRetries ?? 2,
   };
 
   return async (url: string): Promise<string | null> => {
-    let current = url;
-    try {
-      for (let i = 0; i <= opts.maxRedirects; i++) {
-        const res = await requestOnce(current, opts);
-        if (res.status >= 300 && res.status < 400 && res.location) {
-          current = new URL(res.location, current).toString();
+    for (let attempt = 0; ; attempt++) {
+      let current = url;
+      try {
+        for (let i = 0; i <= opts.maxRedirects; i++) {
+          const res = await requestOnce(current, opts);
+          if (res.status >= 300 && res.status < 400 && res.location) {
+            current = new URL(res.location, current).toString();
+            continue;
+          }
+          if (res.status < 200 || res.status >= 300) return null;
+          if (!isAllowedContentType(res.contentType)) return null;
+          return res.body;
+        }
+        return null; // too many redirects
+      } catch (err) {
+        // Retry transient failures (timeout/network), but not deterministic SSRF blocks.
+        if (!(err instanceof SsrfError) && attempt < opts.maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)));
           continue;
         }
-        if (res.status < 200 || res.status >= 300) return null;
-        if (!isAllowedContentType(res.contentType)) return null;
-        return res.body;
+        if (process.env.CRAWL_DEBUG) console.error('[fetch]', current, err);
+        return null; // SSRF / timeout / oversize / network → unfetchable
       }
-      return null; // too many redirects
-    } catch (err) {
-      if (process.env.CRAWL_DEBUG) console.error('[fetch]', current, err);
-      return null; // SSRF / timeout / oversize / network → unfetchable
     }
   };
 }
