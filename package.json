@@ -11,6 +11,7 @@
     "web"
   ],
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "dev": "concurrently -k -n api,worker,web -c blue,magenta,green \"npm -w api run dev\" \"npm -w api run worker\" \"npm -w web run dev\"",
     "build": "npm -w api run build && npm -w web run build",
     "typecheck": "npm run typecheck --workspaces --if-present",

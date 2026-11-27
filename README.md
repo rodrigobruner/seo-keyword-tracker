@@ -14,7 +14,18 @@ PostgreSQL · Node 24 (LTS) + TypeScript + Express + `node-postgres` (raw SQL, *
 
 ## How to run
 
-Requires **Node 24** and **Docker** (for PostgreSQL). From a clean clone:
+Requires **Node 24**. The quickest path is the guided setup — it asks whether to
+use Docker or your own Postgres, generates `.env` (secrets included), migrates,
+optionally seeds, and can start the app:
+
+```bash
+npm run setup
+```
+
+<details>
+<summary>Prefer to do it manually?</summary>
+
+Requires **Docker** (for PostgreSQL). From a clean clone:
 
 ```bash
 # 1. Configure — copy the template and set a demo password
@@ -33,6 +44,8 @@ npm run seed         # crawls the seed sites + generates ≥50k rank snapshots (
 # 4. Run everything (API :4000 · worker · web :5173)
 npm run dev
 ```
+
+</details>
 
 **Demo accounts** — created by the seed; the password is the `SEED_PASSWORD` you set in `.env`:
 
