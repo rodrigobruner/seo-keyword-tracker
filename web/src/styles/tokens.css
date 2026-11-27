@@ -57,14 +57,19 @@
   --sev-low: var(--grey-400);
   --sev-ok: var(--ps-green);
 
-  /* Chart series — distinguishable brand colours, read at runtime by Recharts
-     (no hex is duplicated in JS; see web/src/lib/theme.ts). */
-  --chart-1: var(--ps-primary);
-  --chart-2: var(--ps-navy);
-  --chart-3: var(--ps-error);
-  --chart-4: var(--ps-sky);
-  --chart-5: var(--ps-secondary-600);
-  --chart-6: var(--grey-700);
+  /* Chart series — a categorical palette tuned for distinguishable lines on a
+     light background (saturated, well-separated hues), anchored on the brand
+     indigo. Read at runtime by Recharts; no hex is duplicated in JS. The first
+     colours are the most-separated, since most pages have a handful of keywords.
+     See web/src/lib/theme.ts. */
+  --chart-1: var(--ps-primary); /* indigo (brand) */
+  --chart-2: var(--ps-error); /* red (brand) */
+  --chart-3: #0d9488; /* teal */
+  --chart-4: #f59e0b; /* amber */
+  --chart-5: #db2777; /* pink */
+  --chart-6: #0ea5e9; /* sky */
+  --chart-7: #16a34a; /* green */
+  --chart-8: #7c3aed; /* violet */
   --chart-grid: var(--color-border);
   --chart-axis: var(--color-text-muted);
   --trend-up: var(--ps-green);
