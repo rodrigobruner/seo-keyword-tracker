@@ -68,8 +68,7 @@ export default function AddClient() {
       <header className={styles.header}>
         <h1>Add a client</h1>
         <p className={styles.sub}>
-          We discover the site&apos;s blog sitemap, crawl the first pages, and derive keywords and
-          SEO issues. No rank snapshots are created here — those come from the scheduled seed.
+          Point the crawler at any website — we work out its blog pages from the URL alone.
         </p>
       </header>
 
@@ -110,8 +109,33 @@ export default function AddClient() {
           )}
         </form>
 
-        {activeId != null && <CrawlStatus client={client} slow={slow} />}
+        {activeId == null ? <HowItWorks /> : <CrawlStatus client={client} slow={slow} />}
       </div>
+    </div>
+  );
+}
+
+function HowItWorks() {
+  const steps = [
+    "We find the site's blog sitemap from the URL alone — no configuration.",
+    'We crawl the first 15 blog posts, in the order the sitemap lists them.',
+    'For each page we extract the likely keywords and detect SEO issues.',
+  ];
+  return (
+    <div className={styles.card}>
+      <h2 className={styles.cardTitle}>How it works</h2>
+      <ol className={styles.steps}>
+        {steps.map((text, i) => (
+          <li key={i}>
+            <span className={styles.stepNum}>{i + 1}</span>
+            <span>{text}</span>
+          </li>
+        ))}
+      </ol>
+      <p className={styles.tip}>
+        Any blog URL works — try <code>semrush.com</code> or <code>yoast.com</code>. No rank
+        snapshots are created here; those come from the scheduled seed.
+      </p>
     </div>
   );
 }
