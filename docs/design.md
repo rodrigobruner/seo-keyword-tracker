@@ -2,7 +2,7 @@
 
 The app is the **SEO-console layout (structure of "B") with a minimal finish (aesthetic of "A")**: a dark brand-navy sidebar + light content canvas, a few stat cards, and a dense, sortable table. Clean surfaces, hairline borders, the brand accent, strong typographic hierarchy. Responsive **desktop-first** (the data table collapses to stacked cards on narrow screens).
 
-**Hard rule:** no hardcoded colors or common sizes in component CSS. Everything themeable comes from **design tokens** (CSS custom properties). This keeps future tweaks — or a full identity swap — to a single place.
+**Hard rule:** no hardcoded colors or common sizes in component CSS. Everything themeable comes from **design tokens** (CSS custom properties). This keeps future tweaks, or a full identity swap, to a single place.
 
 The palette, fonts, spacing, radii, and the tab pattern below are taken from **ProductiveShop's own theme CSS** (`--primary`, `--cards-dark`, Satoshi/Switzer, etc.), so the app reads as part of their brand.
 
@@ -10,12 +10,12 @@ The palette, fonts, spacing, radii, and the tab pattern below are taken from **P
 
 Tokens live in one global stylesheet (`web/src/styles/tokens.css`, imported once at the app root). CSS Modules consume them only via `var(--token)`. Two tiers:
 
-1. **Primitives** — the raw brand palette/scale. Swapping identity means editing *only* these.
-2. **Semantic tokens** — role-based aliases components actually use (`--color-surface`, `--color-text`, …). Components never reference primitives directly.
+1. **Primitives**: the raw brand palette/scale. Swapping identity means editing *only* these.
+2. **Semantic tokens**: role-based aliases components actually use (`--color-surface`, `--color-text`, …). Components never reference primitives directly.
 
 ```css
 :root {
-  /* ---- Primitives (brand — from ProductiveShop theme) ---- */
+  /* ---- Primitives (brand, from ProductiveShop theme) ---- */
   --ps-primary:    #6161ff;   /* brand accent */
   --ps-primary-600:#5757e5;   /* hover */
   --ps-primary-200:#b997ee;
@@ -96,22 +96,22 @@ Tokens live in one global stylesheet (`web/src/styles/tokens.css`, imported once
 ```
 No raw hex, no magic px for themeable values. Structural one-offs (e.g. a `1px` hairline) are fine, but any color/spacing/type with a token must use the token.
 
-**Recharts / JS colors:** the chart needs colors as JS values. Keep one source of truth — read tokens at runtime via `getComputedStyle(document.documentElement).getPropertyValue('--color-accent')` (a tiny `readToken()` helper), not duplicated hex in TS.
+**Recharts / JS colors:** the chart needs colors as JS values. Keep one source of truth: read tokens at runtime via `getComputedStyle(document.documentElement).getPropertyValue('--color-accent')` (a tiny `readToken()` helper), not duplicated hex in TS.
 
 **Fonts:** Satoshi + Switzer load from Fontshare (`https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=switzer@500,600,700&display=swap`), with a system-sans fallback so the app still renders offline/if the CDN is blocked.
 
-**Identity swap / theming:** retuning the brand = edit the **primitives** block only. A full alternate theme (or future dark mode) is a `[data-theme="x"] { … }` block overriding the same semantic tokens — components don't change. Breakpoints can't use CSS vars, so they're a documented constant set matching the brand: **1024px**, **768px**, **576px**.
+**Identity swap / theming:** retuning the brand = edit the **primitives** block only. A full alternate theme (or future dark mode) is a `[data-theme="x"] { … }` block overriding the same semantic tokens, and components don't change. Breakpoints can't use CSS vars, so they're a documented constant set matching the brand: **1024px**, **768px**, **576px**.
 
 ## Layout & components
 
 - **Sidebar** (`--color-sidebar-bg` = brand navy `#112235`, fixed `--sidebar-width`): Pages · Clients · + Add client. Active item highlighted with `--color-accent`. Collapses to a top bar under 1024px.
 - **Content canvas** (`--color-bg`), max `--container-max`, padded `--container-pad`.
-- **Stat cards** (3–4): summary of the selected client (pages, open issues, avg/best position). Few and meaningful — no vanity metrics. Brand-flat (surface + border + big radius), subtle shadow optional.
-- **Pages table**: dense, sortable. URL · keyword chips · issue count pill · **best position** (lowest across the page's keywords on the latest date — labelled "best position" so the single number isn't ambiguous), with a trend arrow. Collapses to stacked cards under 576px.
-- **Page detail**: a **segmented control** toggles **Chart** ↔ **Table** for the position history (default **Chart**, default range ~last 90 days for readability — the ≥50k history spans ~400 days). It mirrors ProductiveShop's own tab styling (`.cases__tab`): inactive = `--grey-50` bg / `--grey-500` text; **active = `--color-accent` bg / white text**; `--radius-sm`. Plus keyword chips and issues grouped by severity (`--sev-*`).
+- **Stat cards** (3 to 4): summary of the selected client (pages, open issues, avg/best position). Few and meaningful, no vanity metrics. Brand-flat (surface + border + big radius), subtle shadow optional.
+- **Pages table**: dense, sortable. URL · keyword chips · issue count pill · **best position** (lowest across the page's keywords on the latest date, labelled "best position" so the single number isn't ambiguous), with a trend arrow. Collapses to stacked cards under 576px.
+- **Page detail**: a **segmented control** toggles **Chart** ↔ **Table** for the position history (default **Chart**, default range ~last 90 days for readability, since the ≥50k history spans ~400 days). It mirrors ProductiveShop's own tab styling (`.cases__tab`): inactive = `--grey-50` bg / `--grey-500` text; **active = `--color-accent` bg / white text**; `--radius-sm`. Plus keyword chips and issues grouped by severity (`--sev-*`).
 - **Buttons**: primary = pill (`--btn-radius` 117px), `--color-accent` bg, white text, weight 600. Secondary = outline.
 - **Auth / Add client**: controlled inputs (`--input-*`, square `2px` radius per brand) on a centered `--color-surface` card.
 
 ## Accessibility notes
 
-Severity is never color-only (icon/label too); focus states use `--color-focus-ring`; text/background pairs target WCAG AA contrast. Note the lime `--ps-secondary` and yellow are light — always pair with dark text, never as text on white.
+Severity is never color-only (icon/label too); focus states use `--color-focus-ring`; text/background pairs target WCAG AA contrast. Note the lime `--ps-secondary` and yellow are light, so always pair with dark text, never as text on white.

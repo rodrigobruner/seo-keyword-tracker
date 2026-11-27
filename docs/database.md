@@ -146,7 +146,7 @@ CREATE TABLE rank_snapshots (
   PRIMARY KEY (page_id, keyword_id, captured_at)        -- identity + 1/day + hot query
 );
 
--- Processing queue (infrastructure, NOT a domain entity) — see decisions.md "Async crawl".
+-- Processing queue (infrastructure, NOT a domain entity). See decisions.md "Async crawl".
 CREATE TABLE crawl_jobs (
   id           bigserial PRIMARY KEY,
   client_id    bigint NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
@@ -170,7 +170,7 @@ CREATE INDEX idx_issues_page      ON seo_issues (page_id);
 CREATE INDEX idx_pagekw_keyword   ON page_keywords (keyword_id);   -- reverse lookup / search by keyword
 CREATE INDEX idx_crawl_jobs_claim ON crawl_jobs (run_after) WHERE status = 'QUEUED';  -- dequeue
 -- rank_snapshots: the PK btree (page_id, keyword_id, captured_at) already powers the
--- latest-position query (scanned backward for captured_at DESC) — no extra index needed.
+-- latest-position query (scanned backward for captured_at DESC), no extra index needed.
 -- Optional at real scale: pg_trgm GIN on pages.url and keywords.text for fast ILIKE search.
 ```
 
@@ -222,19 +222,19 @@ A reaper periodically resets jobs stuck in `RUNNING` past a visibility timeout b
 ## Modeling decisions
 
 - **Surrogate `bigint` keys** on the entity tables. Sequential ids are safe to expose because every read is tenancy-scoped (cross-user id → 404). UUIDs were rejected: they'd bloat the large composite index on `rank_snapshots` for no real gain here.
-- **`rank_snapshots` has no surrogate id** — its PK is `(page_id, keyword_id, captured_at)`. That one btree does triple duty: row identity, a one-snapshot-per-pair-per-instant guarantee, and the latest-position query (scanned backward). Saves an index on the biggest table.
-- **`captured_at` is `timestamptz` in UTC**, not a `date`. Faithful to "snapshots stored in UTC", and converting to Toronto can shift the calendar day — exactly the timezone case the brief probes.
+- **`rank_snapshots` has no surrogate id.** Its PK is `(page_id, keyword_id, captured_at)`. That one btree does triple duty: row identity, a one-snapshot-per-pair-per-instant guarantee, and the latest-position query (scanned backward). Saves an index on the biggest table.
+- **`captured_at` is `timestamptz` in UTC**, not a `date`. Faithful to "snapshots stored in UTC", and converting to Toronto can shift the calendar day, exactly the timezone case the brief probes.
 - **Keywords are global and deduped** (`citext UNIQUE`); `page_keywords` is the M:N link carrying the heuristic `relevance`. Deleting a page drops its links, never the shared keyword.
-- **SEO issues are denormalized findings** (`code`/`severity`/`message` per page), not a normalized catalog — they're outputs of the heuristic, cheap to regenerate on each crawl.
+- **SEO issues are denormalized findings** (`code`/`severity`/`message` per page), not a normalized catalog. They're outputs of the heuristic, cheap to regenerate on each crawl.
 - **Latest position is computed, not stored.** A materialized `rank_latest` is the fallback only if the query ever gets slow.
 - **Cascade deletes** flow `users → clients → pages → (page_keywords, seo_issues, rank_snapshots)`.
 - **`citext`** for `email` and `keyword.text` gives case-insensitive uniqueness without `lower()` gymnastics.
-- **`crawl_jobs` is infrastructure, not a domain entity** — it's the durable work queue (claimed via `SKIP LOCKED`) and the monitoring surface. `client.crawl_status` + `pages_done`/`pages_total` is the user-facing state the UI polls; `crawl_jobs` holds the queue mechanics (attempts, timing, `last_error`). The worker updates both.
+- **`crawl_jobs` is infrastructure, not a domain entity.** It's the durable work queue (claimed via `SKIP LOCKED`) and the monitoring surface. `client.crawl_status` + `pages_done`/`pages_total` is the user-facing state the UI polls; `crawl_jobs` holds the queue mechanics (attempts, timing, `last_error`). The worker updates both.
 
 ## Seed & scale notes
 
 - ~30 pages × ~8 keywords ≈ 240 pairs; daily snapshots over ~400 days keeps `rank_snapshots` ≥ 50k regardless of the exact pair count.
-- Bulk-loaded with batched multi-row `unnest` inserts (~10k rows/batch) and a **seedable RNG** (random walk, 1..100). Seed is **idempotent by rebuild**: it `TRUNCATE`s `users, keywords RESTART IDENTITY CASCADE` (cascading to clients/pages/snapshots/issues) then re-inserts — re-running yields the same data.
+- Bulk-loaded with batched multi-row `unnest` inserts (~10k rows/batch) and a **seedable RNG** (random walk, 1..100). Seed is **idempotent by rebuild**: it `TRUNCATE`s `users, keywords RESTART IDENTITY CASCADE` (cascading to clients/pages/snapshots/issues) then re-inserts, so re-running yields the same data.
 - Positions are `1..100` (invented; nothing queries Google).
 
 > Evolution path under real scale (partitioning, issue catalog, ranking dimensions, per-user timezone, etc.): see `scaling.md`.

@@ -82,6 +82,13 @@ async function seed(): Promise<void> {
   `);
   console.log('[seed] done:');
   for (const r of counts.rows) console.log(`[seed]   ${r.table_name.padEnd(16)} ${r.n}`);
+
+  // Show the credentials so whoever ran the seed (directly or via docker:seed)
+  // knows how to log in. The password is the SEED_PASSWORD from the .env.
+  console.log('[seed]');
+  console.log('[seed] Log in with either demo account:');
+  for (const acc of ACCOUNTS) console.log(`[seed]   ${acc.email}`);
+  console.log(`[seed]   password: ${SEED_PASSWORD}  (SEED_PASSWORD in your .env)`);
 }
 
 async function generateSnapshots(rng: () => number): Promise<void> {
