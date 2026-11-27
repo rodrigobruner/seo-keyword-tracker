@@ -246,6 +246,13 @@
   width: 100%;
 }
 
+.chartNote {
+  margin: var(--space-8) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

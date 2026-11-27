@@ -75,7 +75,8 @@ export default function PageDetail() {
   });
 
   const allSeries = snapshots.data?.series ?? [];
-  const series = showAllSeries ? allSeries : allSeries.slice(0, MAX_SERIES);
+  const chartSeries = allSeries.slice(0, MAX_SERIES); // chart stays readable (top N)
+  const tableSeries = showAllSeries ? allSeries : allSeries.slice(0, MAX_SERIES);
 
   if (detail.isLoading) return <div className={styles.state}>Loading…</div>;
   if (detail.isError || !detail.data) {
@@ -211,15 +212,25 @@ export default function PageDetail() {
           <p className={styles.empty}>Pick a start and end date (start on or before end).</p>
         ) : snapshots.isLoading ? (
           <div className={styles.state}>Loading history…</div>
-        ) : series.length === 0 ? (
+        ) : allSeries.length === 0 ? (
           <EmptyState
             icon={<ChartIcon />}
             title="No rank history"
             description="No snapshots for this page in the selected range. Try a wider range."
           />
+        ) : view === 'chart' ? (
+          <>
+            <RankChart series={chartSeries} />
+            {allSeries.length > MAX_SERIES && (
+              <p className={styles.chartNote}>
+                Showing the top {MAX_SERIES} keywords. Switch to Table to see all{' '}
+                {allSeries.length}.
+              </p>
+            )}
+          </>
         ) : (
           <>
-            {view === 'chart' ? <RankChart series={series} /> : <RankTable series={series} />}
+            <RankTable series={tableSeries} />
             {allSeries.length > MAX_SERIES && (
               <button className={styles.showMore} onClick={() => setShowAllSeries((v) => !v)}>
                 {showAllSeries ? `Show top ${MAX_SERIES}` : `Show all ${allSeries.length} keywords`}
