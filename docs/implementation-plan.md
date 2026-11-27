@@ -177,7 +177,7 @@ A unit test proves User A cannot reach User B's page by changing the id in the U
 5. Nothing found → `NoSitemapError` → `Client.crawl_status = FAILED` (covers "not every site has a sitemap where you expect").
 
 **Fetch + extraction (`fetchPage.ts`/`keywords.ts`/`issues.ts`):** native `fetch` (UA, timeout), concurrency ~3 + small delay (politeness). cheerio for parsing.
-- **Keywords (documented heuristic):** RAKE-style candidate phrases per zone + SEO zone-weighting (title 5, h1 4, meta 3, h2/h3 & slug 2, body 1); keep score ≥ 2; top 8; `relevance` normalized 0..1. Optional corpus TF-IDF across the 15 pages (time-permitting). Full spec + sources in `docs/heuristics.md`.
+- **Keywords (documented heuristic):** RAKE-style candidate phrases per zone + SEO zone-weighting (title 5, h1 4, meta 3, h2/h3 & slug 2, body 1); keep score ≥ 2; top 15; `relevance` normalized 0..1. Optional corpus TF-IDF across the 15 pages (time-permitting). Full spec + sources in `docs/heuristics.md`.
 - **Issues (documented checks):** thresholds aligned to Lighthouse/Yoast — title missing/<30/>60; meta missing/<120/>160; single H1; images missing alt (count); thin < 300 words; canonical; viewport; `NOINDEX` (HIGH); `NON_DESCRIPTIVE_LINKS` (LOW); optional `KEYWORD_STUFFING`. Each → `{code, severity, message}`. See `docs/heuristics.md`.
 
 ---
