@@ -19,6 +19,7 @@ const loginLimiter = rateLimit({
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please try again later.' },
 });
 
 export function authRouter(pool: Pool): Router {

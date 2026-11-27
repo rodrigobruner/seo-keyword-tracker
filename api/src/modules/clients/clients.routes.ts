@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import type { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth';
@@ -6,16 +7,25 @@ import { asyncHandler } from '../../middleware/async-handler';
 import { ClientRepository } from '../../repositories/client-repository';
 import { PgCrawlJobRepository } from '../../repositories/crawl-job-repository';
 import { assertHttpUrl, SsrfError } from '../../crawl/http';
+import { parseId } from '../../util/params';
 
 const CreateBody = z.object({
   name: z.string().trim().min(1).max(200),
   websiteUrl: z.string().trim().min(1).max(2000),
 });
 
-function parseId(raw: string | undefined): number | null {
-  const id = Number(raw);
-  return Number.isInteger(id) && id > 0 ? id : null;
-}
+// Each create enqueues a crawl (outbound fetches to a user-supplied URL), so a
+// signed-in user must not be able to spam it into resource exhaustion or use the
+// crawler to hammer a third-party site. Rate-limit per user (keyed by userId,
+// since requireAuth runs first).
+const createClientLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.userId),
+  message: { error: 'Too many new clients. Please wait a few minutes and try again.' },
+});
 
 export function clientsRouter(pool: Pool): Router {
   const clients = new ClientRepository(pool);
@@ -41,7 +51,7 @@ export function clientsRouter(pool: Pool): Router {
     res.json(client);
   }));
 
-  router.post('/', asyncHandler(async (req, res) => {
+  router.post('/', createClientLimiter, asyncHandler(async (req, res) => {
     const parsed = CreateBody.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: 'invalid input' });

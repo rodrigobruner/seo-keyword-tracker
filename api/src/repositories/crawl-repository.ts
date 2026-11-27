@@ -90,7 +90,7 @@ async function replaceKeywords(
   pageId: number,
   keywords: KeywordScore[],
 ): Promise<void> {
-  // Re-crawl semantics: drop this page's old links, then (re)insert.
+  // Re-crawl semantics: drop this page's old keyword links, then (re)insert.
   await client.query(`DELETE FROM page_keywords WHERE page_id = $1`, [pageId]);
   for (const kw of keywords) {
     const kwRes = await client.query<{ id: number }>(

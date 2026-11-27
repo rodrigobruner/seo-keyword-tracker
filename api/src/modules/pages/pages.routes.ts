@@ -4,6 +4,7 @@ import type { Pool } from 'pg';
 import { requireAuth } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/async-handler';
 import { PageRepository } from '../../repositories/page-repository';
+import { parseId } from '../../util/params';
 
 const ListQuery = z.object({
   clientId: z.coerce.number().int().positive().optional(),
@@ -14,7 +15,10 @@ const ListQuery = z.object({
   dir: z.enum(['asc', 'desc']).optional(),
 });
 
-const SnapshotQuery = z.object({ from: z.string().optional(), to: z.string().optional() });
+const SnapshotQuery = z.object({
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+});
 const DAY_MS = 86_400_000;
 
 // The frontend converts Toronto dates to UTC and sends ISO; the API stays pure
@@ -23,11 +27,6 @@ function resolveRange(from?: string, to?: string): { fromUtc: Date; toUtc: Date 
   const toUtc = to ? new Date(to) : new Date();
   const fromUtc = from ? new Date(from) : new Date(toUtc.getTime() - 90 * DAY_MS);
   return { fromUtc, toUtc };
-}
-
-function parseId(raw: string | undefined): number | null {
-  const id = Number(raw);
-  return Number.isInteger(id) && id > 0 ? id : null;
 }
 
 export function pagesRouter(pool: Pool): Router {
