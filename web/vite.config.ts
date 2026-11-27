@@ -1,0 +1,19 @@
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+// Dev server proxies /api to the Express API so cookies stay same-origin
+// (the session cookie is httpOnly + SameSite=Lax).
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        // the API serves /auth, /pages, /clients (no /api prefix) — strip it here
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+});
