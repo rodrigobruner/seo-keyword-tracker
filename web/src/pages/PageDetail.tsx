@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 import { pagesApi, type KeywordSeries } from '../lib/api';
-import { formatDateShort, formatDateLong } from '../lib/datetime';
+import { formatDateShort, formatDateLong, torontoYmd, torontoMidnightUtcIso } from '../lib/datetime';
 import { readToken, seriesColor } from '../lib/theme';
 import { SegmentedControl } from '../components/SegmentedControl';
 import styles from './PageDetail.module.css';
@@ -23,13 +23,15 @@ const DAY_MS = 86_400_000;
 
 type View = 'chart' | 'table';
 
-// Rank-history windows the user can pick. `days: null` = all history.
-type RangeKey = '90d' | '6m' | '1y' | 'all';
+// Rank-history windows the user can pick. Presets use `days` back from now
+// ('all' = full history); 'custom' reveals from/to date pickers.
+type RangeKey = '90d' | '6m' | '1y' | 'all' | 'custom';
 const RANGES: { value: RangeKey; label: string; days: number | null }[] = [
   { value: '90d', label: '90 days', days: 90 },
   { value: '6m', label: '6 months', days: 180 },
   { value: '1y', label: '1 year', days: 365 },
   { value: 'all', label: 'All', days: null },
+  { value: 'custom', label: 'Custom', days: null },
 ];
 
 export default function PageDetail() {
@@ -37,10 +39,24 @@ export default function PageDetail() {
   const id = Number(rawId);
   const [view, setView] = useState<View>('chart');
   const [range, setRange] = useState<RangeKey>('90d');
+  const today = torontoYmd();
+  const [customFrom, setCustomFrom] = useState(() => torontoYmd(new Date(Date.now() - 90 * DAY_MS)));
+  const [customTo, setCustomTo] = useState(today);
 
-  // Convert the picked window to a UTC `from` (the API defaults `to` to now).
-  const days = RANGES.find((r) => r.value === range)?.days ?? null;
-  const fromIso = days == null ? new Date(0).toISOString() : new Date(Date.now() - days * DAY_MS).toISOString();
+  // Resolve the picked window to a UTC range. Presets set `from` back from now
+  // (the API defaults `to` to now). Custom reads each <input type=date> as a
+  // Toronto calendar day and converts to UTC; the end is made inclusive by taking
+  // the start of the day after `to`.
+  const customValid = range !== 'custom' || (!!customFrom && !!customTo && customFrom <= customTo);
+  let fromIso: string | undefined;
+  let toIso: string | undefined;
+  if (range === 'custom') {
+    fromIso = customFrom ? torontoMidnightUtcIso(customFrom) : undefined;
+    toIso = customTo ? torontoMidnightUtcIso(customTo, 1) : undefined;
+  } else {
+    const days = RANGES.find((r) => r.value === range)?.days ?? null;
+    fromIso = days == null ? new Date(0).toISOString() : new Date(Date.now() - days * DAY_MS).toISOString();
+  }
 
   const detail = useQuery({
     queryKey: ['page', id],
@@ -48,9 +64,9 @@ export default function PageDetail() {
     enabled: Number.isInteger(id) && id > 0,
   });
   const snapshots = useQuery({
-    queryKey: ['snapshots', id, range],
-    queryFn: () => pagesApi.snapshots(id, fromIso),
-    enabled: Number.isInteger(id) && id > 0,
+    queryKey: ['snapshots', id, range, range === 'custom' ? `${customFrom}:${customTo}` : ''],
+    queryFn: () => pagesApi.snapshots(id, fromIso, toIso),
+    enabled: Number.isInteger(id) && id > 0 && customValid,
   });
 
   const series = (snapshots.data?.series ?? []).slice(0, MAX_SERIES);
@@ -148,7 +164,32 @@ export default function PageDetail() {
             />
           </div>
         </div>
-        {snapshots.isLoading ? (
+        {range === 'custom' && (
+          <div className={styles.customRange}>
+            <label className={styles.dateField}>
+              <span>From</span>
+              <input
+                type="date"
+                value={customFrom}
+                max={customTo || today}
+                onChange={(e) => setCustomFrom(e.target.value)}
+              />
+            </label>
+            <label className={styles.dateField}>
+              <span>To</span>
+              <input
+                type="date"
+                value={customTo}
+                min={customFrom}
+                max={today}
+                onChange={(e) => setCustomTo(e.target.value)}
+              />
+            </label>
+          </div>
+        )}
+        {!customValid ? (
+          <p className={styles.empty}>Pick a start and end date (start on or before end).</p>
+        ) : snapshots.isLoading ? (
           <div className={styles.state}>Loading history…</div>
         ) : series.length === 0 ? (
           <p className={styles.empty}>No rank snapshots in this range.</p>

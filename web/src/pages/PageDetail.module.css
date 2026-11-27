@@ -192,6 +192,38 @@
   flex-wrap: wrap;
 }
 
+.customRange {
+  display: flex;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.dateField {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.dateField input {
+  height: 34px;
+  padding: 0 var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+}
+
+.dateField input:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+  border-color: var(--color-accent);
+}
+
 .chartWrap {
   width: 100%;
 }
