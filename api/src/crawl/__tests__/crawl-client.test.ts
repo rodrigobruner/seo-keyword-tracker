@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { crawlClient } from '../crawl-client';
+import { crawlClient, CRAWL_MESSAGES } from '../crawl-client';
 import { NoSitemapError } from '../sitemap';
 import type { CrawlRepository } from '../../repositories/crawl-repository';
 import type { PageContent } from '../fetchPage';
@@ -73,7 +73,7 @@ describe('crawlClient', () => {
     expect(repo.saved[0]!.keywords.length).toBeGreaterThan(0);
   });
 
-  it('marks FAILED when sitemap discovery fails', async () => {
+  it('marks FAILED with a clear reason when no sitemap is found', async () => {
     const repo = new FakeRepo();
     const result = await crawlClient(1, 'https://x.com', {
       fetchText,
@@ -83,8 +83,23 @@ describe('crawlClient', () => {
       },
     });
     expect(result.status).toBe('FAILED');
-    expect(repo.calls.some((c) => c.startsWith('markFailed'))).toBe(true);
+    expect(result.error).toBe(CRAWL_MESSAGES.noSitemap);
+    expect(repo.calls).toContain(`markFailed:${CRAWL_MESSAGES.noSitemap}`);
     expect(repo.calls).not.toContain('savePage');
+  });
+
+  it('does not leak a raw error on an unexpected discovery failure', async () => {
+    const repo = new FakeRepo();
+    const result = await crawlClient(1, 'https://x.com', {
+      fetchText,
+      repo,
+      discover: async () => {
+        throw new Error('ECONNRESET deep stack detail');
+      },
+    });
+    expect(result.status).toBe('FAILED');
+    expect(result.error).toBe(CRAWL_MESSAGES.discoveryFailed);
+    expect(result.error).not.toContain('ECONNRESET');
   });
 
   it('is best-effort per page (skips unfetchable, still READY)', async () => {
@@ -100,15 +115,34 @@ describe('crawlClient', () => {
     expect(repo.saved.map((s) => s.url)).toEqual(['https://x.com/a', 'https://x.com/c']);
   });
 
-  it('marks FAILED when no page could be fetched', async () => {
+  it('marks FAILED with a blocked/unreachable reason when no page could be fetched', async () => {
     const repo = new FakeRepo();
     const result = await crawlClient(1, 'https://x.com', {
       fetchText,
       repo,
-      discover: async () => ['https://x.com/a'],
+      discover: async () => ['https://x.com/a', 'https://x.com/b'],
       fetchPage: async () => null,
     });
     expect(result.status).toBe('FAILED');
-    expect(repo.calls.at(-1)).toBe('markFailed:No pages could be crawled');
+    expect(result.error).toBe(CRAWL_MESSAGES.allBlocked(2));
+    expect(repo.calls.at(-1)).toBe(`markFailed:${CRAWL_MESSAGES.allBlocked(2)}`);
+  });
+
+  it('marks the client FAILED (never stuck CRAWLING) and re-throws on an unexpected error', async () => {
+    const repo = new FakeRepo();
+    repo.savePage = async () => {
+      throw new Error('db write failed');
+    };
+    await expect(
+      crawlClient(1, 'https://x.com', {
+        fetchText,
+        repo,
+        discover: async () => ['https://x.com/a'],
+        fetchPage: async (url) => makeContent(url),
+      }),
+    ).rejects.toThrow('db write failed');
+    // terminal state guaranteed before the re-throw, with a user-facing message
+    expect(repo.calls).toContain(`markFailed:${CRAWL_MESSAGES.unexpected}`);
+    expect(repo.calls).not.toContain('markReady');
   });
 });
