@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { asyncHandler } from '../async-handler';
@@ -28,9 +28,17 @@ describe('asyncHandler', () => {
     );
     app.use(errorHandler);
 
-    const res = await request(app).get('/boom');
-    expect(res.status).toBe(500);
-    expect(res.body).toEqual({ error: 'internal server error' }); // no leak
+    // errorHandler logs the error server-side (correct); silence the expected
+    // noise here and assert it happened.
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const res = await request(app).get('/boom');
+      expect(res.status).toBe(500);
+      expect(res.body).toEqual({ error: 'internal server error' }); // no leak
+      expect(errSpy).toHaveBeenCalled();
+    } finally {
+      errSpy.mockRestore();
+    }
   });
 
   it('does not interfere with a successful async handler', async () => {
