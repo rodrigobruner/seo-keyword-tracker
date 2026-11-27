@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { clientsApi, pagesApi, type PagesQuery } from '../lib/api';
 import { EmptyState } from '../components/EmptyState';
-import { PagesIcon, SearchIcon } from '../components/icons';
+import { AlertIcon, PagesIcon, SearchIcon } from '../components/icons';
 import styles from './PagesScreen.module.css';
 
 const PAGE_SIZE = 20;
@@ -81,7 +81,12 @@ export default function PagesScreen() {
       {pages.isLoading ? (
         <div className={styles.state}>Loading…</div>
       ) : pages.isError ? (
-        <div className={styles.state}>Failed to load pages.</div>
+        <EmptyState
+          icon={<AlertIcon />}
+          title="Couldn't load pages"
+          description="Something went wrong while loading. Please try again."
+          action={<button onClick={() => void pages.refetch()}>Try again</button>}
+        />
       ) : total === 0 ? (
         q || clientId ? (
           <EmptyState

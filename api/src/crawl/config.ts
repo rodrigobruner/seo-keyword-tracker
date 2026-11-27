@@ -18,8 +18,8 @@ export const KEYWORD_OPTIONS = {
   maxPhraseLength: 4,
   /** Drop candidates scoring below this (filters lone-mention noise). */
   minScore: 2,
-  /** How many keywords to keep. */
-  topN: 8,
+  /** How many keywords to keep (the detail view shows all of them). */
+  topN: 15,
 } as const;
 
 /** Issue thresholds, aligned to Lighthouse / Yoast (see docs/heuristics.md). */
