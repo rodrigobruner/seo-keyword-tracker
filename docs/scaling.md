@@ -28,9 +28,13 @@ Agency is a team sharing clients → orgs/teams with membership + RBAC; consider
 
 Sessions must be revocable, or need reset/verification/compliance → refresh tokens with rotation + a revocation/session store; password reset + email verification; MFA; login rate-limit + lockout.
 
+**Password hashing under load** — `bcryptjs` (pure JS) runs on the main thread (its async form chunks via `setImmediate`, so it doesn't hard-block, but still burns the single thread), capping login throughput. Swap to native `bcrypt` (libuv threadpool, truly off-thread) or offload hashing to a worker thread when auth volume grows.
+
 ## Crawl pipeline
 
 Already durable + horizontally scalable (Postgres `crawl_jobs` + `SKIP LOCKED` workers; add worker containers for throughput). The remaining lever: broker-grade features → move to a dedicated broker (SQS/BullMQ/Temporal) for priorities, delayed jobs, dead-letter queues, and cross-service fan-out; add per-host rate-limiting + robots-`crawl-delay` compliance and scheduled re-crawls.
+
+**Per-job wall-time** — pages are fetched sequentially (≤10s each), so a slow site's worst case drives the job-visibility timeout up (10min today). Bounded-concurrency page fetching (e.g. 4 at a time, politeness-capped per host) would cut wall-time and let the visibility window shrink. Minor: `zlib.gunzipSync` on a `.xml.gz` sitemap blocks the worker loop briefly — switch to async gunzip if gzipped sitemaps become common.
 
 **Sitemap-discovery boundary (by design):** non-root sitemaps are found only when *declared* — via robots.txt `Sitemap:`, a homepage `<link rel="sitemap">`, or as an index child (all handled). An undeclared sitemap at a non-root path (e.g. `/catalog/sitemap.xml` with nothing pointing to it) is not found, because blind path-probing stays root-only — guessing arbitrary paths is combinatorial and is exactly what the spec's declaration mechanism exists to avoid. Production could close the tail via Search Console / Bing Webmaster sitemap APIs (authenticated per-site submissions) rather than heuristics.
 
@@ -41,6 +45,8 @@ On-page heuristics aren't accurate enough → real SERP/keyword data + ML rankin
 ## Data access
 
 Hand-written SQL becomes a team maintainability cost → adopt a typed query builder (Kysely) — still SQL-first, no full ORM.
+
+**Connection pressure** — the pool has fixed query/connection timeouts (a stuck query can't hold a connection, and a request fails fast when the pool is drained). At scale, tune `max`/timeouts per env and front Postgres with a pooler (PgBouncer) + read replicas for the read-heavy list/detail queries.
 
 ## Security
 

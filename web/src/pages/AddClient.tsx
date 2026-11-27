@@ -5,6 +5,7 @@ import { clientsApi, ApiError, type ClientSummary } from '../lib/api';
 import styles from './AddClient.module.css';
 
 const POLL_MS = 2000;
+const SLOW_AFTER_MS = 120_000; // warn if a crawl hasn't finished in ~2min
 const TERMINAL = new Set(['READY', 'FAILED']);
 
 export default function AddClient() {
@@ -12,11 +13,13 @@ export default function AddClient() {
   const [name, setName] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
 
   const create = useMutation({
     mutationFn: () => clientsApi.create(name.trim(), websiteUrl.trim()),
     onSuccess: (client) => {
       setActiveId(client.id);
+      setStartedAt(Date.now());
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
     },
   });
@@ -34,6 +37,9 @@ export default function AddClient() {
 
   const client = status.data;
   const done = client != null && TERMINAL.has(client.crawlStatus);
+  // Re-evaluated on each poll re-render; flags a crawl that's stuck (slow site or
+  // worker offline) so the user isn't left staring at an endless spinner.
+  const slow = startedAt != null && !done && Date.now() - startedAt > SLOW_AFTER_MS;
 
   // When a crawl finishes, the pages/list caches are stale — refresh once.
   useEffect(() => {
@@ -50,6 +56,7 @@ export default function AddClient() {
     setName('');
     setWebsiteUrl('');
     setActiveId(null);
+    setStartedAt(null);
     create.reset();
   }
 
@@ -103,13 +110,13 @@ export default function AddClient() {
           )}
         </form>
 
-        {activeId != null && <CrawlStatus client={client} />}
+        {activeId != null && <CrawlStatus client={client} slow={slow} />}
       </div>
     </div>
   );
 }
 
-function CrawlStatus({ client }: { client: ClientSummary | undefined }) {
+function CrawlStatus({ client, slow }: { client: ClientSummary | undefined; slow: boolean }) {
   if (!client) {
     return (
       <div className={styles.card}>
@@ -154,6 +161,12 @@ function CrawlStatus({ client }: { client: ClientSummary | undefined }) {
               data-indeterminate={pct == null}
             />
           </div>
+          {slow && (
+            <p className={styles.slow}>
+              This is taking longer than usual. The site may be slow, or the crawl worker may be
+              offline. We&apos;ll keep checking.
+            </p>
+          )}
         </>
       )}
     </div>
