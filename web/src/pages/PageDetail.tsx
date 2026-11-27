@@ -19,13 +19,28 @@ import styles from './PageDetail.module.css';
 
 const MAX_SERIES = 8; // keep the chart/table legible
 const SEVERITY_ORDER = { HIGH: 0, MEDIUM: 1, LOW: 2 } as const;
+const DAY_MS = 86_400_000;
 
 type View = 'chart' | 'table';
+
+// Rank-history windows the user can pick. `days: null` = all history.
+type RangeKey = '90d' | '6m' | '1y' | 'all';
+const RANGES: { value: RangeKey; label: string; days: number | null }[] = [
+  { value: '90d', label: '90 days', days: 90 },
+  { value: '6m', label: '6 months', days: 180 },
+  { value: '1y', label: '1 year', days: 365 },
+  { value: 'all', label: 'All', days: null },
+];
 
 export default function PageDetail() {
   const { id: rawId } = useParams();
   const id = Number(rawId);
   const [view, setView] = useState<View>('chart');
+  const [range, setRange] = useState<RangeKey>('90d');
+
+  // Convert the picked window to a UTC `from` (the API defaults `to` to now).
+  const days = RANGES.find((r) => r.value === range)?.days ?? null;
+  const fromIso = days == null ? new Date(0).toISOString() : new Date(Date.now() - days * DAY_MS).toISOString();
 
   const detail = useQuery({
     queryKey: ['page', id],
@@ -33,8 +48,8 @@ export default function PageDetail() {
     enabled: Number.isInteger(id) && id > 0,
   });
   const snapshots = useQuery({
-    queryKey: ['snapshots', id],
-    queryFn: () => pagesApi.snapshots(id),
+    queryKey: ['snapshots', id, range],
+    queryFn: () => pagesApi.snapshots(id, fromIso),
     enabled: Number.isInteger(id) && id > 0,
   });
 
@@ -115,15 +130,23 @@ export default function PageDetail() {
       <section className={styles.card}>
         <div className={styles.historyHead}>
           <h2 className={styles.cardTitle}>Rank history</h2>
-          <SegmentedControl<View>
-            ariaLabel="Rank history view"
-            value={view}
-            onChange={setView}
-            segments={[
-              { value: 'chart', label: 'Chart' },
-              { value: 'table', label: 'Table' },
-            ]}
-          />
+          <div className={styles.historyControls}>
+            <SegmentedControl<RangeKey>
+              ariaLabel="Date range"
+              value={range}
+              onChange={setRange}
+              segments={RANGES.map((r) => ({ value: r.value, label: r.label }))}
+            />
+            <SegmentedControl<View>
+              ariaLabel="Rank history view"
+              value={view}
+              onChange={setView}
+              segments={[
+                { value: 'chart', label: 'Chart' },
+                { value: 'table', label: 'Table' },
+              ]}
+            />
+          </div>
         </div>
         {snapshots.isLoading ? (
           <div className={styles.state}>Loading history…</div>

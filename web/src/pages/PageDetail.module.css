@@ -186,6 +186,12 @@
   flex-wrap: wrap;
 }
 
+.historyControls {
+  display: flex;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
 .chartWrap {
   width: 100%;
 }
