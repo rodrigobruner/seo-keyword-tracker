@@ -204,8 +204,8 @@ function HowItWorks() {
         ))}
       </ol>
       <p className={styles.tip}>
-        Any blog URL works — try <code>semrush.com</code> or <code>yoast.com</code>. No rank
-        snapshots are created here; those come from the scheduled seed.
+        Works with any website that has a blog — just paste its URL above. Crawling runs in
+        the background; your client appears in the list below when it&apos;s ready.
       </p>
     </div>
   );
